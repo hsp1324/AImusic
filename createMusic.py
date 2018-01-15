@@ -81,16 +81,15 @@ def createMelody():
 
 
 
+process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
 
-def createMelody2():
+def createMelody2(process):
 	notes = []
 	beats = []
 	relative_notes_index = []
 	section_beat = []
 	# process = [cMajor, gMajor, aMinor, eMinor, fMajor, cMajor, fMajor, gMajor]
-	process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
-
 
 	prev_section_note = []
 	prev_chord = None
@@ -113,13 +112,8 @@ def createMelody2():
 		relative_notes_index.append(relative_section_note_index)
 
 
-	#always end with do
-	dos = ['c3', 'c', 'c5']
-	do_dist = [abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c3')),
-			   abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c')),
-			   abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c5'))]
-	do_max_index = do_dist.index(min(do_dist))
-	notes[-1][-1] = dos[do_max_index]
+	
+	notes = make_last_note_do(notes)
 
 
 	melody = zip_note_beat(notes, beats)
@@ -133,8 +127,11 @@ def create_random_beat():
 	beats = []
 	total_beat = 0
 	section_beat = []
-	while(total_beat < 0.99):
-		next_beat = rd.choice([4,8])
+	while(total_beat < 1):
+		if(total_beat >= 7/8):
+			next_beat = 8
+		else:
+			next_beat = rd.choice([4,8])
 		section_beat.append(next_beat)
 		total_beat += 1.0 / next_beat
 	return section_beat
@@ -154,6 +151,7 @@ def create_notes(process, chord, section_beat, relative_notes_index):
 	accum_beat = 0
 	section_note = []
 	prev_key = None
+	prev_note = None
 	for iter_beat_index in range(len(section_beat)):
 		do = scale[0]
 		mi = scale[2]
@@ -161,12 +159,13 @@ def create_notes(process, chord, section_beat, relative_notes_index):
 		soD = keys[keys.index(do)-3]
 		miD = keys[keys.index(do)-5]
 		next_note = None
-		if(process.index(chord) == 0):  # make first measure random
-			if(accum_beat in [0, 0.25,0.5,0.75]):  
+		if(process.index(chord) == 0):  # make first measure random8
+			probability = [1]*len(keys)
+			if(accum_beat == 0):
 				next_note = rd.choice([do,mi,so])
 			else:
 				prev_note_index = keys.index(prev_note)
-				probability = [1]*len(keys)
+				
 				if(prev_note_index == 0):
 					probability[prev_note_index+1] += 10
 				elif(prev_note_index == len(keys)-1):
@@ -185,6 +184,14 @@ def create_notes(process, chord, section_beat, relative_notes_index):
 				probability[so_index] += 10
 				probability[soD_index] += 10
 				probability[miD_index] += 10
+
+				if(accum_beat in [0, 0.25,0.5,0.75]): # Add extrat weight every 1/4 tik
+					probability[do_index] += 10
+					probability[mi_index] += 10
+					probability[so_index] += 10
+					probability[soD_index] += 10
+					probability[miD_index] += 10
+
 				next_note = rd.choices(keys, weights=probability, k=1)[0]
 				
 
@@ -194,6 +201,7 @@ def create_notes(process, chord, section_beat, relative_notes_index):
 				comparitive_note_index = iter_section_note_index[iter_beat_index]
 				probability[comparitive_note_index] += 1000000
 			next_note = rd.choices(keys, weights=probability, k=1)[0]
+
 		prev_note = next_note
 		accum_beat += section_beat[iter_beat_index]
 		section_note.append(next_note)
@@ -220,15 +228,24 @@ def zip_note_beat(notes, beats):
 	return melody
 
 
+def make_last_note_do(notes):
+	dos = ['c3', 'c', 'c5']
+	do_dist = [abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c3')),
+			   abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c')),
+			   abs(c_major_scale.index(notes[-1][-2]) - c_major_scale.index('c5'))]
+	do_max_index = do_dist.index(min(do_dist))
+	notes[-1][-1] = dos[do_max_index]
+	return notes
 
+process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
-new_melody = createMelody2()
+new_melody = createMelody2(process)
 
 pysynth.make_wav(base, boost = 1.5, fn = "base/base15.wav")
 
-pysynth.make_wav(new_melody, fn = "melody/new_melody7.wav")
+pysynth.make_wav(new_melody, fn = "melody/new_melody9.wav")
 
-mix_files("base/base15.wav", "melody/new_melody7.wav", "testSong/random7.wav")
+mix_files("base/base15.wav", "melody/new_melody9.wav", "testSong/random9.wav")
 
 
 

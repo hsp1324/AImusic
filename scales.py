@@ -249,6 +249,54 @@ bMajor = ['b','d#','f#']
 bMinor = ['b','db','f#']
 
 
+def create_base1(process, name='new'):
+	first_chord = process[0]
+	root = first_chord[0]
+	chord = first_chord[1]
+	scale = make_scale(root, chord)
+	base_1 = []
+	base_2 = []
+	for chord in process:
+		scale = make_scale(chord[0],chord[1])
+		do = scale[0]
+		mi = scale[2]
+		so = scale[4]
+		base_1.append((do+'*',8))
+		base_1.append(('r',8))
+		base_1.append((so+'*',8))
+		base_1.append(('r',8))
+		base_2.append(('r',8))
+		base_2.append(('r',8))
+		base_2.append((mi+'*',8))
+		base_2.append(('r',8))
+	##### Tried to make last chord different as a ending chord #####
+	# last_chord = process[-1]
+	# last_scale = make_scale(last_chord[0],last_chord[1])
+	# do = last_scale[0]
+	# mi = last_scale[2]
+	# so = last_scale[4]
+	# base_1.append((so,8))
+	# base_1.append(('r',8))
+	# base_1.append((mi,8))
+	# base_1.append(('r',8))
+	# base_1.append((do,4))
+	# base_2.append((mi,8))
+	# base_2.append(('r',8))
+	# base_2.append((do,8))
+	# base_2.append(('r',8))
+
+	pysynth.make_wav(base_1, boost = 1.5, fn = "base/base_" + name + "_1.wav")
+	pysynth.make_wav(base_2, boost = 1.5, fn = "base/base_" + name + "_2.wav")
+	mix_files("base/base_" + name + "_1.wav", "base/base_" + name + "_2.wav", "base/base_" + name + ".wav")
+	return "base/base_" + name + ".wav"
+
+
+
+
+
+
+
+
 
 
 

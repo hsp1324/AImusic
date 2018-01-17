@@ -4,13 +4,6 @@ import random as rd
 import scales as sc
 import os.path
 
-
-c_major_scale = ['c3','d3','e3','f3','g3','a3','b3','c','d','e','f','g','a','b','c5','d5','e5','f5','g5','a5','b5',]
-d_major_scale = ['d','e','f#','g','']
-
-simple_beat = [2,4]
-
-
 cMajor = ['c','e','g']
 cMinor = ['c','eb','g']
 dMajor = ['d','f#','a']
@@ -25,25 +18,6 @@ aMajor = ['a','c#','e']
 aMinor = ['a','c','e']
 bMajor = ['b','d#','f#']
 bMinor = ['b','db','f#']
-
-
-test = [['c*',4],['e*',4],['g*',2],['c5*',2],['r',1]]
-
-base = [['c3*',4] , ['g3*',4] , ['c4*',4], ['r',4],
-		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4],
-		['a2*',4], ['e3*',4] , ['a3*',4] , ['r',4],
-		['e2*',4], ['b2*',4], ['e3*',4] , ['r',4],
-		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
-		['c2*',4], ['g2*',4], ['c3*',4] , ['r',4],
-		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
-		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4]]
-
-smpl_melody = [['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
-			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
-			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
-			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4]]
-
-
 
 new_melody = [[rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], 
 			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice([rd.choice(gMajor) ,'r']),4], 
@@ -85,7 +59,7 @@ def createMelody():
 process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
 
-def createMelody2(process):
+def createMelody2(process, whole_beat):
 	notes = []
 	beats = []
 	relative_notes_index = []
@@ -100,7 +74,7 @@ def createMelody2(process):
 
 		# Make beat
 		if(i == 0 or i == 1):
-			section_beat = create_random_beat()
+			section_beat = create_random_beat(whole_beat)
 		else:
 			section_beat = create_relative_beat(i, beats)
 		beats.append(section_beat)
@@ -111,13 +85,15 @@ def createMelody2(process):
 		# Make Note accordingly
 		section_note = create_notes(process, chord, section_beat, relative_notes_index, i)
 		relative_section_note_index = create_relative_notes_index(chord, section_note)
+		print("section_note", section_note)
 		notes.append(section_note)
 		relative_notes_index.append(relative_section_note_index)
 
 
-	
 	notes = make_last_note_do(notes)
 
+	print("notes", notes)
+	print("beats", beats)
 
 	melody = zip_note_beat(notes, beats)
 	return melody
@@ -126,17 +102,17 @@ def createMelody2(process):
 
 
 
-def create_random_beat():
+def create_random_beat(whole_beat):
 	# beats = []
-	total_beat = 0
+	accumulated_beat = 0
 	section_beat = []
-	while(total_beat < 1):
-		if(total_beat >= 7/8):
+	while(accumulated_beat < whole_beat):
+		if(accumulated_beat >= 7/8):
 			next_beat = 8
 		else:
 			next_beat = rd.choice([4,8])
 		section_beat.append(next_beat)
-		total_beat += 1.0 / next_beat
+		accumulated_beat += 1.0 / next_beat
 
 	return section_beat
 
@@ -271,23 +247,91 @@ def make_last_note_do(notes):
 
 
 
-process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
-new_melody = createMelody2(process)
 
-pysynth.make_wav(base, boost = 1.5, fn = "base/base15.wav")
 
+c_major_scale = ['c3','d3','e3','f3','g3','a3','b3','c','d','e','f','g','a','b','c5','d5','e5','f5','g5','a5','b5',]
+d_major_scale = ['d','e','f#','g','']
+
+
+
+test = [['c*',4],['e*',4],['g*',2],['c5*',2],['r',1]]
+
+base = [['c3*',4] , ['g3*',4] , ['c4*',4], ['r',4],
+		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4],
+		['a2*',4], ['e3*',4] , ['a3*',4] , ['r',4],
+		['e2*',4], ['b2*',4], ['e3*',4] , ['r',4],
+		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
+		['c2*',4], ['g2*',4], ['c3*',4] , ['r',4],
+		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
+		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4]]
+
+smpl_melody = [['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
+			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
+			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
+			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4]]
+
+base0 = [['c3*',4], ['g3*',4], ['c4*',4], ['r',4],
+		 ['g2*',4], ['d3*',4], ['g3*',4], ['r',4],
+		 ['a2*',4], ['e3*',4], ['a3*',4], ['r',4],
+		 ['e2*',4], ['b2*',4], ['e3*',4], ['r',4],
+		 ['f2*',4], ['c3*',4], ['f3*',4], ['r',4],
+		 ['c2*',4], ['g2*',4], ['c3*',4], ['r',4],
+		 ['f2*',4], ['c3*',4], ['f3*',4], ['r',4],
+		 ['g2*',4], ['d3*',4], ['g3*',4], ['r',4]]
+
+base1_1 = [['c3*',2], ['g3*',4], ['g3*',4],
+		   ['g2*',2], ['g3*',4], ['g3*',4],
+		   ['f2*',2], ['f3*',4], ['f3*',4],
+		   ['g2*',2], ['g3*',4], ['g3*',4]]
+
+base1_2 = [['r',2], ['e3*',4], ['e3*',4],
+		   ['r',2], ['e3*',4], ['e3*',4],
+		   ['r',2], ['c3*',4], ['c3*',4],
+		   ['r',2], ['d3*',4], ['d3*',4]]
+
+process0 = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
+
+process1 = [('c', 'major'), ('c','major'), ('f','major'),('g','major')]
+
+# Love is an open door chord
+process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
+			('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
+			('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
+			('c', 'major'), ('e','minor'), ('a','minor'),('g','major'),
+			('a', 'minor'), ('a','minor'), ('c','major'),('c','major'),
+			('d', 'minor'), ('d','minor'), ('f','major'),('f','major'),
+			('c', 'major'), ('e','minor'), ('d','minor'),('f','major'),
+			('c', 'major'), ('e','minor'), ('d','minor'),('f','major'),
+			('c', 'major'), ('e','minor'), ('d','minor'),('f','major'),
+			('c', 'major'), ('e','minor'), ('f','major'),('g','major')]
+
+
+process = process2
+
+new_melody = createMelody2(process, 1/2)
+new_base = sc.create_base1(process, "Love_is_an_open_door")
+# pysynth.make_wav(base1_1, boost = 1.5, fn = "base/base1_1.wav")
+# pysynth.make_wav(base1_2, boost = 1.5, fn = "base/base1_2.wav")
+
+# creating file name
 index = 0
 mixed_filename = 'rangeOut'
 for i in range(1,100):
-	if(not os.path.isfile('testSong/random' + str(i) + '.wav')):
+	if(not os.path.isfile('testSong/process2_' + str(i) + '.wav')):
 		index = i
-		mixed_filename = 'testSong/random' + str(i) + '.wav'
+		mixed_filename = 'testSong/process2_' + str(i) + '.wav'
 		break
 
-pysynth.make_wav(new_melody, fn = "melody/new_melody" + str(index) + ".wav")
 
-mix_files("base/base15.wav", "melody/new_melody" + str(index) + ".wav", mixed_filename)
+
+pysynth.make_wav(new_melody, fn = "melody/melody2_" + str(index) + ".wav")
+mix_files(new_base, "melody/melody2_" + str(index) + ".wav", mixed_filename)
+
+
+# mixing base1, base2 and melody
+# mix_files("base/base1_1.wav", "melody/melody1_" + str(index) + ".wav", mixed_filename)
+# mix_files(mixed_filename, "base/base1_2.wav", "full.wav")
 
 
 

@@ -1,6 +1,7 @@
 import pysynth
 from mixfiles import mix_files
 import random as rd
+from pydub import AudioSegment
 
 all_note1 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
 all_note2 = ['c','db','d','eb','e','f','gb','b','ab','a','bb','b']
@@ -206,26 +207,52 @@ def half_down(note):
 
 
 
-def make_scale(root, scale):
+def make_scale(root, scale, octave=4):
 	keys = []
-	if(root in all_note1):
-		root_index = all_note1.index(root)
-		keys = all_note1[root_index:] + [i+'5' for i in all_note1[:root_index]]
-	elif(root in all_note2):
-		root_index = all_note2.index(root)
-		keys = all_note1[root_index:] + [i+'5' for i in all_note2[:root_index]]
+	if octave == 4:
+		if(root in all_note1):    # #_version
+			print(3)
+			root_index = all_note1.index(root)
+			keys = all_note1[root_index:] + [i+'5' for i in all_note1] + [i+'6' for i in all_note2]
+		elif(root in all_note2):  # b_version
+			print(4)
+			root_index = all_note2.index(root)
+			keys = all_note1[root_index:] + [i+'5' for i in all_note2] + [i+'6' for i in all_note2]
+		else:
+			raise Exception('Not a key')
+
 	else:
-		raise Exception('Not a key')
+		octave_str = str(octave)
+		if(root in all_note1):    # #_version
+			print(1)
+			root_index = all_note1.index(root)
+			keys = [i+octave_str for i in all_note1[root_index:]] + \
+				   [i+str(octave+1) for i in all_note1] + \
+				   [i+str(octave+2) for i in all_note1]
+		elif(root in all_note2):  # b_version
+			print(2)
+			root_index = all_note2.index(root)
+			keys = [i+octave_str for i in all_note2[root_index:]] + \
+				   [i+str(octave+1) for i in all_note2] + \
+				   [i+str(octave+2) for i in all_note2]
+		else:
+			raise Exception('Not a key')
+
 
 	scale_notes = []
+	print('len:', len(keys), keys)
 	if(scale == 'major'):
-		scale_notes = [keys[0],keys[2],keys[4],keys[5],keys[7],keys[9],keys[11]]
+		scale_notes = [keys[0],   keys[2],   keys[4],   keys[5],   keys[7],   keys[9],   keys[11],
+					   keys[0+12],keys[2+12],keys[4+12],keys[5+12],keys[7+12],keys[9+12],keys[11+12]]
 	elif(scale == 'minor'):
-		scale_notes = [keys[0],keys[2],keys[3],keys[5],keys[7],keys[8],keys[10]]
+		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[7],   keys[8],   keys[10],
+					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[7+12],keys[8+12],keys[10+12]]
 	elif(scale == 'altered'):
-		scale_notes = [keys[0],keys[1],keys[3],keys[4],keys[6],keys[8],keys[10]]
+		scale_notes = [keys[0],   keys[1],   keys[3],   keys[4],   keys[6],   keys[8],   keys[10],
+					   keys[0+12],keys[1+12],keys[3+12],keys[4+12],keys[6+12],keys[8+12],keys[10+12]]
 	elif(scale == 'diminished'):
-		scale_notes = [keys[0],keys[2],keys[3],keys[5],keys[6],keys[8],keys[9],keys[11]]
+		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[6],   keys[8],   keys[9],   keys[11],
+					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[6+12],keys[8+12],keys[9+12],keys[11+12]]
 	return scale_notes
 
 
@@ -249,15 +276,47 @@ bMajor = ['b','d#','f#']
 bMinor = ['b','db','f#']
 
 
+############## Canon process base ##################
+def create_base0(process, name='new'):
+	# base0 = [['c3*',4], ['g3*',4], ['c4*',4], ['r',4],
+	# 		 ['g2*',4], ['d3*',4], ['g3*',4], ['r',4],
+	# 		 ['a2*',4], ['e3*',4], ['a3*',4], ['r',4],
+	# 		 ['e2*',4], ['b2*',4], ['e3*',4], ['r',4],
+	# 		 ['f2*',4], ['c3*',4], ['f3*',4], ['r',4],
+	# 		 ['c2*',4], ['g2*',4], ['c3*',4], ['r',4],
+	# 		 ['f2*',4], ['c3*',4], ['f3*',4], ['r',4],
+	# 		 ['g2*',4], ['d3*',4], ['g3*',4], ['r',4]]
+
+	base_1 = []
+	first_chord = True
+	for chord in process:
+		if first_chord:
+			first_chord = False
+			scale = make_scale(chord[0], chord[1], 3)
+		else:
+			scale = make_scale(chord[0], chord[1], 2)
+		do = scale[0]
+		mi = scale[2]
+		so = scale[4]
+		do_octave = scale[7]
+		base_1.append((do+'*',4))
+		base_1.append((so+'*',4))
+		base_1.append((do_octave+'*',4))
+		base_1.append(('r',4))
+
+	final_name = "base/base_" + name + ".wav"
+	pysynth.make_wav(base_1, boost = 1.5, fn = final_name)
+	return final_name
+
+
+
+
+
 def create_base1(process, name='new'):
-	first_chord = process[0]
-	root = first_chord[0]
-	chord = first_chord[1]
-	scale = make_scale(root, chord)
 	base_1 = []
 	base_2 = []
 	for chord in process:
-		scale = make_scale(chord[0],chord[1])
+		scale = make_scale(chord[0],chord[1], 3)
 		do = scale[0]
 		mi = scale[2]
 		so = scale[4]
@@ -287,8 +346,13 @@ def create_base1(process, name='new'):
 
 	pysynth.make_wav(base_1, boost = 1.5, fn = "base/base_" + name + "_1.wav")
 	pysynth.make_wav(base_2, boost = 1.5, fn = "base/base_" + name + "_2.wav")
-	mix_files("base/base_" + name + "_1.wav", "base/base_" + name + "_2.wav", "base/base_" + name + ".wav")
-	return "base/base_" + name + ".wav"
+
+	sound1 = AudioSegment.from_file("base/base_" + name + "_1.wav")
+	sound2 = AudioSegment.from_file("base/base_" + name + "_2.wav")
+	combined = sound1.overlay(sound2)
+	final_name = "base/base_" + name + ".wav"
+	combined.export(final_name, format='wav')
+	return final_name
 
 
 

@@ -3,6 +3,9 @@ from mixfiles import mix_files
 import random as rd
 import scales as sc
 import os.path
+from pydub import AudioSegment
+import sys, getopt
+
 
 cMajor = ['c','e','g']
 cMinor = ['c','eb','g']
@@ -107,7 +110,7 @@ def create_random_beat(whole_beat):
 	accumulated_beat = 0
 	section_beat = []
 	while(accumulated_beat < whole_beat):
-		if(accumulated_beat >= 7/8):
+		if(accumulated_beat >= whole_beat - 1/8):
 			next_beat = 8
 		else:
 			next_beat = rd.choice([4,8])
@@ -307,32 +310,67 @@ process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major')]
 
 
-process = process2
-
-new_melody = createMelody2(process, 1/2)
-new_base = sc.create_base1(process, "Love_is_an_open_door")
-# pysynth.make_wav(base1_1, boost = 1.5, fn = "base/base1_1.wav")
-# pysynth.make_wav(base1_2, boost = 1.5, fn = "base/base1_2.wav")
-
-# creating file name
-index = 0
-mixed_filename = 'rangeOut'
-for i in range(1,100):
-	if(not os.path.isfile('testSong/process2_' + str(i) + '.wav')):
-		index = i
-		mixed_filename = 'testSong/process2_' + str(i) + '.wav'
-		break
 
 
 
-pysynth.make_wav(new_melody, fn = "melody/melody2_" + str(index) + ".wav")
-mix_files(new_base, "melody/melody2_" + str(index) + ".wav", mixed_filename)
+def main(argv):
+
+	inputfile = ''
+	outputfile = ''
+	process_name = ''
+	try:
+		opts, args = getopt.getopt(argv,"hp:t:",["ifile=","ofile="])
+	except getopt.GetoptError:
+		print('Error test.py -p <base> -t <beat>')
+		sys.exit(2)
+
+	for opt, arg in opts:
+		if opt == '-h':
+			print('test.py -p <process> -t <tempo>')
+			print("Cannon - process0 - 1")
+			print("Love is an open door - process2 - 1/2")
+		
+			sys.exit()
+		elif opt in ("-p", "--ifile"):
+			process = eval(arg)
+			process_name = arg
+		elif opt in ("-t", "--ofile"):
+			tempo = eval(arg)
 
 
-# mixing base1, base2 and melody
-# mix_files("base/base1_1.wav", "melody/melody1_" + str(index) + ".wav", mixed_filename)
-# mix_files(mixed_filename, "base/base1_2.wav", "full.wav")
+
+
+	# process = process0
+
+	new_melody = createMelody2(process, tempo)
+	if process_name == 'process0':
+		new_base = sc.create_base0(process, "Canon")
+	elif process_name == 'process2':
+		new_base = sc.create_base1(process, "Love_is_an_open_door")
+
+
+	# creating file name
+	index = 0
+	mixed_filename = 'rangeOut'
+	for i in range(1,100):
+		if(not os.path.isfile('testSong/' + process_name + '_' + str(i) + '.wav')):
+			index = i
+			mixed_filename = 'testSong/' + process_name + '_' + str(i) + '.wav'
+			break
+
+	melody_name = "melody/melody" + process_name[-1] +  "_" + str(index) + ".wav"
+	pysynth.make_wav(new_melody, fn = melody_name)
+
+
+	sound1 = AudioSegment.from_file(melody_name)
+	sound2 = AudioSegment.from_file(new_base)
+
+	combined = sound1.overlay(sound2)
+
+	combined.export(mixed_filename, format='wav')
 
 
 
-
+if __name__== "__main__":
+  main(sys.argv[1:])
+ 

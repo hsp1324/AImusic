@@ -211,11 +211,9 @@ def make_scale(root, scale, octave=4):
 	keys = []
 	if octave == 4:
 		if(root in all_note1):    # #_version
-			print(3)
 			root_index = all_note1.index(root)
 			keys = all_note1[root_index:] + [i+'5' for i in all_note1] + [i+'6' for i in all_note2]
 		elif(root in all_note2):  # b_version
-			print(4)
 			root_index = all_note2.index(root)
 			keys = all_note1[root_index:] + [i+'5' for i in all_note2] + [i+'6' for i in all_note2]
 		else:
@@ -224,13 +222,11 @@ def make_scale(root, scale, octave=4):
 	else:
 		octave_str = str(octave)
 		if(root in all_note1):    # #_version
-			print(1)
 			root_index = all_note1.index(root)
 			keys = [i+octave_str for i in all_note1[root_index:]] + \
 				   [i+str(octave+1) for i in all_note1] + \
 				   [i+str(octave+2) for i in all_note1]
 		elif(root in all_note2):  # b_version
-			print(2)
 			root_index = all_note2.index(root)
 			keys = [i+octave_str for i in all_note2[root_index:]] + \
 				   [i+str(octave+1) for i in all_note2] + \
@@ -240,20 +236,22 @@ def make_scale(root, scale, octave=4):
 
 
 	scale_notes = []
-	print('len:', len(keys), keys)
-	if(scale == 'major'):
+	# print('len:', len(keys), keys)
+	if('major' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[4],   keys[5],   keys[7],   keys[9],   keys[11],
 					   keys[0+12],keys[2+12],keys[4+12],keys[5+12],keys[7+12],keys[9+12],keys[11+12]]
-	elif(scale == 'minor'):
+	elif('minor' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[7],   keys[8],   keys[10],
 					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[7+12],keys[8+12],keys[10+12]]
-	elif(scale == 'altered'):
+	elif('altered' in scale):
 		scale_notes = [keys[0],   keys[1],   keys[3],   keys[4],   keys[6],   keys[8],   keys[10],
 					   keys[0+12],keys[1+12],keys[3+12],keys[4+12],keys[6+12],keys[8+12],keys[10+12]]
-	elif(scale == 'diminished'):
+	elif('diminished' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[6],   keys[8],   keys[9],   keys[11],
 					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[6+12],keys[8+12],keys[9+12],keys[11+12]]
 	return scale_notes
+
+
 
 
 

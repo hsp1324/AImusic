@@ -42,61 +42,32 @@ new_melody2 =[[rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4
 			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], ['r',4]]
 
 
-def createMelody():
-	note = []
-	beat = []
-	for i in range(1,8*4+1):
-		if(i%16 == 0):
-			note.append('r')
-			beat.append(4)
-		elif(i%8 == 0):
-			note.append(rd.choice(cMajor+['r']))
-			beat.append(4)
-		else:
-			note.append(rd.choice(cMajor))
-			beat.append(4)
-	return list(zip(note,beat))
-
-
 
 process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
 
-def createMelody2(process, whole_beat):
+def createMelody(process, whole_beat):
 	notes = []
 	beats = []
 	relative_notes_index = []
-	section_beat = []
-	# process = [cMajor, gMajor, aMinor, eMinor, fMajor, cMajor, fMajor, gMajor]
+	first_chord = process[0]
+	
+	keys = sc.make_scale(first_chord[0],first_chord[1])[:10]
+	beats = make_beats(process, whole_beat)
+	print("------Generating Melody------")
+	for chord_index in range(len(process)):
 
-	prev_section_note = []
-	prev_chord = None
-	prev_key = None
+		# Make melody according to beats
+		chord = process[chord_index]
+		measure_notes = make_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
+		relative_measure_notes_index = make_relative_notes_index(chord, measure_notes, keys, notes)
+		notes.append(measure_notes)
+		relative_notes_index.append(relative_measure_notes_index)
 
-	for i in range(len(process)):
-
-		# Make beat
-		if(i == 0 or i == 1):
-			section_beat = create_random_beat(whole_beat)
-		else:
-			section_beat = create_relative_beat(i, beats)
-		beats.append(section_beat)
-		chord = process[i]
-
-		print("chord", chord)
-		print("section_beat",section_beat)
-		# Make Note accordingly
-		section_note = create_notes(process, chord, section_beat, relative_notes_index, i)
-		relative_section_note_index = create_relative_notes_index(chord, section_note)
-		print("section_note", section_note)
-		notes.append(section_note)
-		relative_notes_index.append(relative_section_note_index)
-
-
-	notes = make_last_note_do(notes)
-
-	print("notes", notes)
-	print("beats", beats)
+		print("chord:", chord)
+		print("measure_beat:", beats[chord_index])
+		print("measure_notes:", measure_notes)
+		print("-------------" + str(chord_index+1) + "/" + str(len(process)) + ("-------------"))
 
 	melody = zip_note_beat(notes, beats)
 	return melody
@@ -105,81 +76,127 @@ def createMelody2(process, whole_beat):
 
 
 
-def create_random_beat(whole_beat):
-	# beats = []
+def generate_measure_beat(whole_beat):
+	beat_choice = [4,8]
 	accumulated_beat = 0
-	section_beat = []
+	measure_beat = []
+	probability = [1]*2
 	while(accumulated_beat < whole_beat):
 		if(accumulated_beat >= whole_beat - 1/8):
 			next_beat = 8
 		else:
-			next_beat = rd.choice([4,8])
-		section_beat.append(next_beat)
+			### Tried to repeat the beats ###
+			# if(accumulated_beat == 0.5):
+			# 	first_beat = measure_beat[0]
+			# 	first_beat_index = beat_choice.index(first_beat)
+			# 	probability[first_beat_index] += 1
+			next_beat = rd.choices(beat_choice, weights=probability, k=1)[0]
+		measure_beat.append(next_beat)
 		accumulated_beat += 1.0 / next_beat
 
-	return section_beat
+	return measure_beat
 
 
 
-def create_relative_beat(i, beats):
+def generate_relative_beat(i, beats):
 	beat_type = beats[i%2]
 	return beat_type
 
 
 
-def create_notes(process, chord, section_beat, relative_notes_index, chord_index):
+def make_beats(process, whole_beat):
+	beats = []
+	for i in range(len(process)):
+		if(i == 0 or i == 1):
+			measure_beat = generate_measure_beat(whole_beat)
+		else:
+			measure_beat = generate_relative_beat(i, beats)
+		beats.append(measure_beat)
+	return beats
+
+
+def apply_up_down_tendancy(probability, measure_notes, keys):
+	prev_note = measure_notes[-1]
+	prev_note_index = keys.index(prev_note)
+
+	probability[prev_note_index] += 5
+	# increase notes right next to prev_note
+	if(prev_note_index == 0):
+		probability[prev_note_index+1] += 5
+	elif(prev_note_index == len(keys)-1):
+		probability[prev_note_index-1] += 5
+	else:
+		probability[prev_note_index+1] += 5
+		probability[prev_note_index-1] += 5
+
+	if len(measure_notes) >=2:
+		prev_prev_note = measure_notes[-2]
+		prev_prev_note_index = keys.index(prev_prev_note)
+		if(prev_note_index - prev_prev_note_index == 1 and prev_note_index != len(keys)-1):
+			probability[prev_note_index+1] += 5
+		elif(prev_prev_note_index - prev_note_index == 1 and prev_note_index != 0):
+			probability[prev_note_index-1] += 5
+	return None
+
+
+# Currently  I am making first two measure melody independent and make the rest of measures melody to be similar as the first two melody.
+def make_notes(process, chord_index, measure_beat, relative_notes_index, keys, notes):
 	# Make Note accordingly
+	chord = process[chord_index]
 	scale = sc.make_scale(chord[0],chord[1])
-	root_index = c_major_scale.index(chord[0])
-	keys = c_major_scale[root_index-5:root_index+5]
 	accum_beat = 0
-	section_note = []
+	measure_notes = []
 	prev_key = None
 	prev_note = None
-	for iter_beat_index in range(len(section_beat)):
+	for iter_beat_index in range(len(measure_beat)):
 		do = scale[0]
 		mi = scale[2]
 		so = scale[4]
 		soD = keys[keys.index(do)-3]
 		miD = keys[keys.index(do)-5]
 		next_note = None
+		probability = [0]*len(keys)
+
+		# for i in range(8):
+		# 	probability[i] += 1
+
+
 		if(chord_index == 0 or chord_index == 1):  # make first measure random8
-			probability = [1]*len(keys)
 			if(accum_beat == 0):
 				next_note = rd.choice([do,mi,so])
 			else:
-				prev_note_index = keys.index(prev_note)
-				
-				if(prev_note_index == 0):
-					probability[prev_note_index+1] += 10
-				elif(prev_note_index == len(keys)-1):
-					probability[prev_note_index-1] += 10
-				else:
-					probability[prev_note_index+1] += 10
-					probability[prev_note_index-1] += 10
-				probability[prev_note_index] += 10
+				apply_up_down_tendancy(probability, measure_notes, keys)
+
 				do_index = keys.index(do)
 				mi_index = keys.index(mi)
 				so_index = keys.index(so)
 				miD_index = keys.index(miD)
 				soD_index = keys.index(soD)
-				probability[do_index] += 10
-				probability[mi_index] += 10
-				probability[so_index] += 10
-				probability[soD_index] += 10
-				probability[miD_index] += 10
+				probability[do_index] += 5
+				probability[mi_index] += 5
+				probability[so_index] += 5
+				probability[soD_index] += 5
+				probability[miD_index] += 5
 
 				if(accum_beat in [0, 0.25,0.5,0.75]): # Add extrat weight every 1/4 tik
-					probability[do_index] += 10
-					probability[mi_index] += 10
-					probability[so_index] += 10
-					probability[soD_index] += 10
-					probability[miD_index] += 10
+					probability[do_index] += 500
+					probability[mi_index] += 500
+					probability[so_index] += 500
+					probability[soD_index] += 500
+					probability[miD_index] += 500
+
+				# Tring to repeat the melody within current  measure.... working on it
+				if(accum_beat is 0.5):
+					first_note = measure_notes[0]
+					first_note_index = keys.index(first_note)
+					probability[first_note_index] += 5
+
+
 
 				next_note = rd.choices(keys, weights=probability, k=1)[0]
 				
+
 		else:  # make the rest of the measures imitating the first measure
-			probability = [1]*len(keys)
 			comparitive_note_index = relative_notes_index[chord_index%2][iter_beat_index]
 			probability[comparitive_note_index] += 100
 
@@ -211,28 +228,25 @@ def create_notes(process, chord, section_beat, relative_notes_index, chord_index
 			next_note = rd.choices(keys, weights=probability, k=1)[0]
 
 		prev_note = next_note
-		accum_beat += section_beat[iter_beat_index]
-		section_note.append(next_note)
+		accum_beat += measure_beat[iter_beat_index]
+		measure_notes.append(next_note)
 
-	return section_note
+	return measure_notes
 
 
 
-def create_relative_notes_index(chord, section_note):
-	root_index = c_major_scale.index(chord[0])
-	keys = c_major_scale[root_index-5:root_index+5]
-	relative_section_note_index = []
-	for note in section_note:
+def make_relative_notes_index(chord, measure_notes, keys, notes):
+	relative_measure_notes_index = []
+	for note in measure_notes:
 		relative_next_note_index = keys.index(note)
-		relative_section_note_index.append(relative_next_note_index)
-	return relative_section_note_index
+		relative_measure_notes_index.append(relative_next_note_index)
+	return relative_measure_notes_index
 
 
 
 def zip_note_beat(notes, beats):
 	melody = []
 	for i in zip(notes,beats):
-		print(i)
 		melody.extend(tuple(zip(i[0],i[1])))
 	return melody
 
@@ -309,6 +323,10 @@ process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('d','minor'),('f','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major')]
 
+process3 = [('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
+			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
+			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
+			('f', 'major'), ('e','major'), ('a','minor'),('g','minor')]
 
 
 
@@ -329,6 +347,7 @@ def main(argv):
 			print('test.py -p <process> -t <tempo>')
 			print("Cannon - process0 - 1")
 			print("Love is an open door - process2 - 1/2")
+			print("R&B - process3 - 1")
 		
 			sys.exit()
 		elif opt in ("-p", "--ifile"):
@@ -339,15 +358,13 @@ def main(argv):
 
 
 
-
-	# process = process0
-
-	new_melody = createMelody2(process, tempo)
+	new_melody = createMelody(process, tempo)
 	if process_name == 'process0':
 		new_base = sc.create_base0(process, "Canon")
 	elif process_name == 'process2':
 		new_base = sc.create_base1(process, "Love_is_an_open_door")
-
+	elif process_name == 'process3':
+		new_base = sc.create_base0(process, "R&B")
 
 	# creating file name
 	index = 0

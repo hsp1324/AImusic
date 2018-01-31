@@ -3,10 +3,19 @@ from mixfiles import mix_files
 import random as rd
 from pydub import AudioSegment
 
-all_note1 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
-all_note2 = ['c','db','d','eb','e','f','gb','b','ab','a','bb','b']
+all_note1 = ['c','db','d','eb','e','f','gb','g','ab','a','bb','b']
+all_note2 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
 c_diatonc_scale = ['c','d','e','f','g','a','b']
 
+def enharmonic(note):
+	if(note in all_note1):
+		index = all_note1.index(note)
+		return all_note2[index]
+	elif(note in all_note2):
+		index = all_note2.index(note)
+		return all_note1[index]
+	else:
+		raise Exception("There is no such", note, "exists")
 
 def whole_up(note):
 	changed_note = None
@@ -205,50 +214,55 @@ def half_down(note):
 		raise Exception('Not a scale')
 	return changed_note
 
-
+# To adjust root.  scale_notes start from one octave down from root. 
+# so root is scale_notes[octave_adjust(12)].
+octave_adjust = 7
 
 def make_scale(root, scale, octave=4):
 	keys = []
 	if octave == 4:
 		if(root in all_note1):    # #_version
 			root_index = all_note1.index(root)
-			keys = all_note1[root_index:] + [i+'5' for i in all_note1] + [i+'6' for i in all_note2]
+			keys = [i+'3' for i in all_note1[root_index:]] + all_note1 + [i+'5' for i in all_note1] + [i+'6' for i in all_note2]
 		elif(root in all_note2):  # b_version
 			root_index = all_note2.index(root)
-			keys = all_note1[root_index:] + [i+'5' for i in all_note2] + [i+'6' for i in all_note2]
+			keys = [i+'3' for i in all_note2[root_index:]] + all_note2 + [i+'5' for i in all_note2] + [i+'6' for i in all_note2]
 		else:
 			raise Exception('Not a key')
 
 	else:
-		octave_str = str(octave)
+		all_note = None
 		if(root in all_note1):    # #_version
-			root_index = all_note1.index(root)
-			keys = [i+octave_str for i in all_note1[root_index:]] + \
-				   [i+str(octave+1) for i in all_note1] + \
-				   [i+str(octave+2) for i in all_note1]
+			all_note = all_note1
 		elif(root in all_note2):  # b_version
-			root_index = all_note2.index(root)
-			keys = [i+octave_str for i in all_note2[root_index:]] + \
-				   [i+str(octave+1) for i in all_note2] + \
-				   [i+str(octave+2) for i in all_note2]
+			all_note = all_note2
 		else:
 			raise Exception('Not a key')
 
+		root_index = all_note.index(root)
+		keys = [i+str(octave-1) for i in all_note[root_index:]] + \
+			   [i+str(octave)   for i in all_note] + \
+			   [i+str(octave+1) for i in all_note] + \
+			   [i+str(octave+2) for i in all_note]
 
 	scale_notes = []
 	# print('len:', len(keys), keys)
 	if('major' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[4],   keys[5],   keys[7],   keys[9],   keys[11],
-					   keys[0+12],keys[2+12],keys[4+12],keys[5+12],keys[7+12],keys[9+12],keys[11+12]]
+					   keys[0+12],keys[2+12],keys[4+12],keys[5+12],keys[7+12],keys[9+12],keys[11+12],
+					   keys[0+24],keys[2+24],keys[4+24],keys[5+24],keys[7+24],keys[9+24],keys[11+24]]
 	elif('minor' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[7],   keys[8],   keys[10],
-					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[7+12],keys[8+12],keys[10+12]]
+					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[7+12],keys[8+12],keys[10+12],
+					   keys[0+24],keys[2+24],keys[3+24],keys[5+24],keys[7+24],keys[8+24],keys[10+24]]
 	elif('altered' in scale):
 		scale_notes = [keys[0],   keys[1],   keys[3],   keys[4],   keys[6],   keys[8],   keys[10],
-					   keys[0+12],keys[1+12],keys[3+12],keys[4+12],keys[6+12],keys[8+12],keys[10+12]]
+					   keys[0+12],keys[1+12],keys[3+12],keys[4+12],keys[6+12],keys[8+12],keys[10+12],
+					   keys[0+24],keys[1+24],keys[3+24],keys[4+24],keys[6+24],keys[8+24],keys[10+24]]
 	elif('diminished' in scale):
 		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[6],   keys[8],   keys[9],   keys[11],
-					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[6+12],keys[8+12],keys[9+12],keys[11+12]]
+					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[6+12],keys[8+12],keys[9+12],keys[11+12],
+					   keys[0+24],keys[2+24],keys[3+24],keys[5+24],keys[6+24],keys[8+24],keys[9+24],keys[11+24]]
 	return scale_notes
 
 
@@ -293,10 +307,10 @@ def create_base0(process, name='new'):
 			scale = make_scale(chord[0], chord[1], 3)
 		else:
 			scale = make_scale(chord[0], chord[1], 2)
-		do = scale[0]
-		mi = scale[2]
-		so = scale[4]
-		do_octave = scale[7]
+		do = scale[0+octave_adjust]
+		mi = scale[2+octave_adjust]
+		so = scale[4+octave_adjust]
+		do_octave = scale[7+octave_adjust]
 		base_1.append((do+'*',4))
 		base_1.append((so+'*',4))
 		base_1.append((do_octave+'*',4))
@@ -315,9 +329,9 @@ def create_base1(process, name='new'):
 	base_2 = []
 	for chord in process:
 		scale = make_scale(chord[0],chord[1], 3)
-		do = scale[0]
-		mi = scale[2]
-		so = scale[4]
+		do = scale[0+octave_adjust]
+		mi = scale[2+octave_adjust]
+		so = scale[4+octave_adjust]
 		base_1.append((do+'*',8))
 		base_1.append(('r',8))
 		base_1.append((so+'*',8))

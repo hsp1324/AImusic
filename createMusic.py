@@ -1,5 +1,4 @@
 import pysynth
-from mixfiles import mix_files
 import random as rd
 import scales as sc
 import os.path
@@ -82,9 +81,9 @@ def generate_notes(process, chord_index, measure_beat, relative_notes_index, key
 			keys_index = keys.index(do) + comparitive_note_index
 			comparitive_note = keys[keys_index]
 			if(comparitive_note in scale):
-				probability[keys_index] += 100
+				probability[keys_index] += 20
 			else:
-				probability[keys_index] += 50
+				probability[keys_index] += 10
 
 
 			##### got it from first measure######
@@ -94,8 +93,8 @@ def generate_notes(process, chord_index, measure_beat, relative_notes_index, key
 				apply_tride_notes_probability(probability, scale, keys, accum_beat)
 			##### got it from first measure######
 
-			print(chord[0],' probability:', probability)
-			print(chord[0],' scale:', scale)
+			# print(chord[0],' probability:', probability)
+			# print(chord[0],' scale:', scale)
 			next_note = rd.choices(keys, weights=probability, k=1)[0]
 
 		prev_note = next_note
@@ -148,6 +147,7 @@ def generate_beats(process, whole_beat):
 	return beats
 
 
+
 def apply_up_down_tendancy(probability, measure_notes, keys):
 	prev_note = measure_notes[-1]
 	prev_note_index = keys.index(prev_note)
@@ -171,6 +171,7 @@ def apply_up_down_tendancy(probability, measure_notes, keys):
 		elif(prev_prev_note_index - prev_note_index == 1 and prev_note_index != 0):
 			probability[prev_note_index-1] += 5
 	return None
+
 
 
 def apply_tride_notes_probability(probability, scale, keys, accum_beat):

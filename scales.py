@@ -1,5 +1,4 @@
 import pysynth
-from mixfiles import mix_files
 import random as rd
 from pydub import AudioSegment
 
@@ -368,81 +367,3 @@ def create_base1(process, name='new'):
 
 
 
-
-
-
-
-
-
-
-
-# major = s.make_scale('a', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_aMajor.wav")
-
-
-# major = s.make_scale('a#', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_a#Major.wav")
-
-
-# major = s.make_scale('b', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_bMajor.wav")
-
-
-# major = s.make_scale('c', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_cMajor.wav")
-
-
-# major = s.make_scale('c#', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_c#Major.wav")
-
-
-# major = s.make_scale('d', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_dMajor.wav")
-
-
-# major = s.make_scale('d#', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_d#Major.wav")
-
-
-# major = s.make_scale('e', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_eMajor.wav")
-
-
-# major = s.make_scale('f', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_fMajor.wav")
-
-
-# major = s.make_scale('f#', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_f#Major.wav") 
-
-
-# major = s.make_scale('g', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_gMajor.wav")
-
-
-# major = s.make_scale('g#', 'major')
-# beat = [4]*7
-# melody = list(zip(major,beat))
-# pysynth.make_wav(melody, fn = "test_g#Major.wav")

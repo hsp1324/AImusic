@@ -7,43 +7,7 @@ from pydub import AudioSegment
 import sys, getopt
 
 
-cMajor = ['c','e','g']
-cMinor = ['c','eb','g']
-dMajor = ['d','f#','a']
-dMinor = ['d','f','a']
-eMajor = ['e','g#','b']
-eMinor = ['e','g','b']
-fMajor = ['f','a','c']
-fMinor = ['f','ab','c']
-gMajor = ['g','b','d']
-gMinor = ['g','bb','d']
-aMajor = ['a','c#','e']
-aMinor = ['a','c','e']
-bMajor = ['b','d#','f#']
-bMinor = ['b','db','f#']
-
-new_melody = [[rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], 
-			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice([rd.choice(gMajor) ,'r']),4], 
-			  [rd.choice(aMinor),4], [rd.choice(aMinor),4], [rd.choice(aMinor),4], [rd.choice(aMinor),4], 
-			  [rd.choice(eMinor),4], [rd.choice(eMinor),4], [rd.choice(eMinor),4], ['r',4], 
-			  [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], 
-			  [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice([rd.choice(cMajor) ,'r']),4], 
-			  [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], 
-			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], ['r',4]]
-
-
-new_melody2 =[[rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], 
-			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice([rd.choice(gMajor) ,'r']),4], 
-			  [rd.choice(aMinor),4], [rd.choice(aMinor),4], [rd.choice(aMinor),4], [rd.choice(aMinor),4], 
-			  [rd.choice(eMinor),4], [rd.choice(eMinor),4], [rd.choice(eMinor),4], ['r',4], 
-			  [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], 
-			  [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice(cMajor),4], [rd.choice([rd.choice(cMajor) ,'r']),4], 
-			  [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], [rd.choice(fMajor),4], 
-			  [rd.choice(gMajor),4], [rd.choice(gMajor),4], [rd.choice(gMajor),4], ['r',4]]
-
-
-
-process = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
+#relative_next_note_index: how far the note away from do on the major
 
 # For more info, read octave_adjust in scales.py
 octave_adjust = sc.octave_adjust
@@ -56,7 +20,8 @@ def createMelody(process, whole_beat):
 	first_chord = process[0]
 	
 	keys = sc.make_scale(first_chord[0],first_chord[1])
-	beats = make_beats(process, whole_beat)
+	print('main keys: ', keys)
+	beats = generate_beats(process, whole_beat)
 	print("------Generating Melody------")
 	for chord_index in range(len(process)):
 		chord = process[chord_index]
@@ -65,7 +30,7 @@ def createMelody(process, whole_beat):
 		# Make melody according to beats
 		
 		scale = sc.make_scale(chord[0],chord[1])   # I need to fix it!!!
-		measure_notes = make_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
+		measure_notes = generate_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
 		print("measure_notes:", measure_notes)
 		# relative_measure_notes_index = make_relative_notes_index(scale, measure_notes)
 		notes.append(measure_notes)
@@ -80,7 +45,7 @@ def createMelody(process, whole_beat):
 
 
 # Currently  I am making first two measure melody independent and make the rest of measures melody to be similar as the first two melody.
-def make_notes(process, chord_index, measure_beat, relative_notes_index, keys, notes):
+def generate_notes(process, chord_index, measure_beat, relative_notes_index, keys, notes):
 	# Make Note accordingly
 	chord = process[chord_index]
 	scale = sc.make_scale(chord[0],chord[1])
@@ -109,17 +74,18 @@ def make_notes(process, chord_index, measure_beat, relative_notes_index, keys, n
 				# 	first_note_index = keys.index(first_note)
 				# 	probability[first_note_index] += 5
 
-
-
 				next_note = rd.choices(keys, weights=probability, k=1)[0]
 				
 
 		else:  # make the rest of the measures imitating the first measure
 			comparitive_note_index = relative_notes_index[chord_index%2][iter_beat_index]
-			comparitive_note = scale[comparitive_note_index]
-			if(comparitive_note in keys):
-				keys_index = keys.index(comparitive_note)
+			keys_index = keys.index(do) + comparitive_note_index
+			comparitive_note = keys[keys_index]
+			if(comparitive_note in scale):
 				probability[keys_index] += 100
+			else:
+				probability[keys_index] += 50
+
 
 			##### got it from first measure######
 			if prev_note != None:
@@ -128,7 +94,8 @@ def make_notes(process, chord_index, measure_beat, relative_notes_index, keys, n
 				apply_tride_notes_probability(probability, scale, keys, accum_beat)
 			##### got it from first measure######
 
-
+			print(chord[0],' probability:', probability)
+			print(chord[0],' scale:', scale)
 			next_note = rd.choices(keys, weights=probability, k=1)[0]
 
 		prev_note = next_note
@@ -138,25 +105,6 @@ def make_notes(process, chord_index, measure_beat, relative_notes_index, keys, n
 		measure_notes.append(next_note)
 	relative_notes_index.append(relative_measure_notes_index)
 	return measure_notes
-
-
-
-# def make_relative_notes_index(scale, measure_notes):
-# 	relative_measure_notes_index = []
-# 	for note in measure_notes:
-# 		if note not in scale:
-# 			note = sc.enharmonic(note)
-# 		if note not in scale:
-# 			print('note: ', note)
-# 			print('scale: ', scale)
-# 			raise Exception('WHATWHATWHATWHATWHATWHATWHATWHAT')
-# 		relative_next_note_index = scale.index(note)
-# 		relative_measure_notes_index.append(relative_next_note_index)
-# 	return relative_measure_notes_index
-
-
-
-
 
 
 
@@ -189,7 +137,7 @@ def generate_relative_beat(i, beats):
 
 
 
-def make_beats(process, whole_beat):
+def generate_beats(process, whole_beat):
 	beats = []
 	for i in range(len(process)):
 		if(i == 0 or i == 1):
@@ -321,10 +269,24 @@ process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('d','minor'),('f','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major')]
 
+
 process3 = [('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor')]
+
+process4 = [('c', 'major'), ('g','major'), ('a','minor'),('c','major'),
+			('f', 'major'), ('g','major'), ('c','major'),('g','major'),
+			('c', 'major'), ('g','major'), ('a','minor'),('f','major'),
+			('d', 'minor'), ('g','major'), ('c','major'),('c','major')]
+
+
+process5 = [('d', 'major'), ('a','major'), ('b','minor'),('f#','minor'),
+			('g', 'major'), ('e','major'), ('a','major'),('a','major'),
+			('d', 'major'), ('a','major'), ('b','minor'),('f#','minor'),
+			('g', 'major'), ('a','major'), ('d','major'),('d','major')]
+
+
 
 
 
@@ -346,6 +308,8 @@ def main(argv):
 			print("Cannon - process0 - 1")
 			print("Love is an open door - process2 - 1/2")
 			print("R&B - process3 - 1")
+			print("joy1 - process4 - 1")
+			print("joy2 - process5 - 1")
 		
 			sys.exit()
 		elif opt in ("-p", "--ifile"):
@@ -363,6 +327,11 @@ def main(argv):
 		new_base = sc.create_base1(process, "Love_is_an_open_door")
 	elif process_name == 'process3':
 		new_base = sc.create_base0(process, "R&B")
+	elif process_name == 'process4':
+		new_base = sc.create_base0(process, "Canon")
+	elif process_name == 'process5':
+		new_base = sc.create_base0(process, "Canon")
+
 
 	# creating file name
 	index = 0

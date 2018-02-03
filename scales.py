@@ -3,8 +3,8 @@ from mixfiles import mix_files
 import random as rd
 from pydub import AudioSegment
 
-all_note1 = ['c','db','d','eb','e','f','gb','g','ab','a','bb','b']
-all_note2 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
+all_note1 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
+all_note2 = ['c','db','d','eb','e','f','gb','g','ab','a','bb','b']
 c_diatonc_scale = ['c','d','e','f','g','a','b']
 
 def enharmonic(note):

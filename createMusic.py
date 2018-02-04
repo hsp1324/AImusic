@@ -357,4 +357,36 @@ def main(argv):
 
 if __name__== "__main__":
   main(sys.argv[1:])
+
+
+
+
+def generate_from_shell(process, tempo=1):
+	process_name = "shell_test"
+
+	new_melody = createMelody(process, tempo)
+	new_base = sc.create_base0(process, "Canon")
+
+
+	# creating file name
+	index = 0
+	mixed_filename = 'rangeOut'
+	for i in range(1,100):
+		if(not os.path.isfile('testSong/' + process_name + '_' + str(i) + '.wav')):
+			index = i
+			mixed_filename = 'testSong/' + process_name + '_' + str(i) + '.wav'
+			break
+
+	melody_name = "melody/melody" + process_name[-1] +  "_" + str(index) + ".wav"
+	pysynth.make_wav(new_melody, fn = melody_name)
+
+
+	sound1 = AudioSegment.from_file(melody_name)
+	sound2 = AudioSegment.from_file(new_base)
+
+	combined = sound1.overlay(sound2)
+
+	combined.export(mixed_filename, format='wav')
+
+
  

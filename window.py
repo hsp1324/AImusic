@@ -18,6 +18,8 @@ class Window(Frame):
 		self.label_process = None
 		self.manual_process = []
 		self.recommend_process = []
+		self.num_of_loop = 1
+		self.label_loop = None
 		self.init__window()
 	def init__window(self):
 		rowIndex = 0
@@ -83,7 +85,15 @@ class Window(Frame):
 		deleteChordButton.grid(row=rowIndex, column=1)		
 		rowIndex+=1
 
+		self.label_loop = Label(self, text="Loop: " + str(self.num_of_loop))
+		self.label_loop.grid(row=rowIndex, column=0, sticky=W)
 
+		plusButton = Button(self, text="+", command=self.incrementLoop)
+		plusButton.grid(row=rowIndex, column=1)
+		minusButton = Button(self, text="-", command=self.decrementLoop)
+		minusButton.grid(row=rowIndex, column=2)
+	
+		rowIndex+=1
 		# label_1 = Label(self, text="Save As")
 		# entry_1 = Entry(self)
 		# label_1.grid(row=rowIndex)
@@ -174,6 +184,16 @@ class Window(Frame):
 		self.label_process.configure(text=str_process)
 
 
+	def incrementLoop(self):
+		self.num_of_loop += 1
+		self.label_loop.configure(text="Loop: " + str(self.num_of_loop))
+
+
+	def decrementLoop(self):
+		self.num_of_loop -= 1
+		if(self.num_of_loop < 1):
+			self.num_of_loop = 1
+		self.label_loop.configure(text="Loop: " + str(self.num_of_loop))
 
 	def printName(self):
 		print("Sun")
@@ -191,7 +211,8 @@ class Window(Frame):
 
 
 	def generateMusic(self):
-		cm.generate_from_shell(self.process)
+		process = self.process * self.num_of_loop
+		cm.generate_from_shell(process)
 
 
 root = Tk()

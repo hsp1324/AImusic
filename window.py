@@ -20,7 +20,10 @@ class Window(Frame):
 		self.recommend_process = []
 		self.num_of_loop = 1
 		self.label_loop = None
+		self.label_status = None
 		self.init__window()
+
+
 	def init__window(self):
 		rowIndex = 0
 
@@ -31,12 +34,12 @@ class Window(Frame):
 		# quitButton.place(x=0, y=0)
 		self.makeMenu()
 
-		self.label_process = Label(self, bg="cyan", text="Create your own music", anchor=W, justify=LEFT, height=10, width=32)
-		self.label_process.grid(row=rowIndex, columnspan=300, sticky=W)
-
-		generateButton = Button(self, text="Generate", command=self.generateMusic)
-		generateButton.grid(row=rowIndex, column=4)
+		label_title = Label(self, text="Hello AI Music Generator!!!", font=("Helvetica", 20))
+		label_title.grid(row=rowIndex, columnspan=5)
 		rowIndex+=1
+
+
+
 
 
 
@@ -102,9 +105,6 @@ class Window(Frame):
 
 
 
-		quitButton = Button(self, text="Quit", command=exit)
-		quitButton.grid(row=rowIndex)
-		rowIndex+=1
 		# label_1 = Label(self, text="Name")
 		# entry_1 = Entry(self)
 		# label_1.grid(row=0)
@@ -115,7 +115,21 @@ class Window(Frame):
 		rowIndex+=1
 
 
+		self.label_process = Label(self, text="Create your own music", anchor=W, justify=LEFT, height=10, width=32, borderwidth=10, highlightthickness=2, highlightbackground="black")
+		self.label_process.grid(row=rowIndex, columnspan=300, sticky=W)
 
+		generateButton = Button(self, text="Generate", command=self.generateMusic)
+		generateButton.grid(row=rowIndex, column=4)
+		rowIndex+=1
+
+
+		self.label_status = Label(self, bg="cyan", text="Waiting for input.....", anchor=CENTER, justify=CENTER, height=1, width=34)
+		self.label_status.grid(row=rowIndex, columnspan=300, sticky=W)
+
+		quitButton = Button(self, text="Quit", command=exit)
+		quitButton.grid(row=rowIndex, column=4)
+		
+		rowIndex+=1
 
 
 	def makeMenu(self):
@@ -211,8 +225,15 @@ class Window(Frame):
 
 
 	def generateMusic(self):
-		process = self.process * self.num_of_loop
-		cm.generate_from_shell(process)
+		self.label_status.configure(text="Generating..........", bg="yellow")
+		self.label_status.update()
+		try:
+			process = self.process * self.num_of_loop
+			cm.generate_from_shell(process)
+			self.label_status.configure(text="Generating Done !!!", bg="lawn green")
+		except:
+			self.label_status.configure(text="Something Wrong !!!", bg="red")
+
 
 
 root = Tk()

@@ -256,10 +256,9 @@ base1_2 = [['r',2], ['e3*',4], ['e3*',4],
 
 process0 = [('c', 'major'), ('g','major'), ('a','minor'),('e','minor'),('f','major'),('c','major'),('f','major'),('g','major')]
 
-process1 = [('c', 'major'), ('c','major'), ('f','major'),('g','major')]
 
 # Love is an open door chord
-process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
+process1 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('a','minor'),('g','major'),
@@ -271,24 +270,24 @@ process2 = [('c', 'major'), ('e','minor'), ('f','major'),('g','major'),
 			('c', 'major'), ('e','minor'), ('f','major'),('g','major')]
 
 
-process3 = [('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
+process2 = [('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor'),
 			('f', 'major'), ('e','major'), ('a','minor'),('g','minor')]
 
-process4 = [('c', 'major'), ('g','major'), ('a','minor'),('c','major'),
+process3 = [('c', 'major'), ('g','major'), ('a','minor'),('c','major'),
 			('f', 'major'), ('g','major'), ('c','major'),('g','major'),
 			('c', 'major'), ('g','major'), ('a','minor'),('f','major'),
 			('d', 'minor'), ('g','major'), ('c','major'),('c','major')]
 
 
-process5 = [('d', 'major'), ('a','major'), ('b','minor'),('f#','minor'),
+process4 = [('d', 'major'), ('a','major'), ('b','minor'),('f#','minor'),
 			('g', 'major'), ('e','major'), ('a','major'),('a','major'),
 			('d', 'major'), ('a','major'), ('b','minor'),('f#','minor'),
 			('g', 'major'), ('a','major'), ('d','major'),('d','major')]
 
-
-
+recommend_list = ['Canon', 'Love is an open door']
+processes = [process0, process1, process2, process3, process4]
 
 
 
@@ -307,10 +306,10 @@ def main(argv):
 		if opt == '-h':
 			print('test.py -p <process> -t <tempo>')
 			print("Cannon - process0 - 1")
-			print("Love is an open door - process2 - 1/2")
-			print("R&B - process3 - 1")
-			print("joy1 - process4 - 1")
-			print("joy2 - process5 - 1")
+			print("Love is an open door - process1 - 1/2")
+			print("R&B - process2 - 1")
+			print("joy1 - process3 - 1")
+			print("joy2 - process4 - 1")
 		
 			sys.exit()
 		elif opt in ("-p", "--ifile"):

@@ -47,8 +47,6 @@ class Window(Frame):
 		recommendDropDown.set(None)
 		recommendDropDownObject = OptionMenu(self, recommendDropDown, *cm.recommend_list, command=self.select_recommend)
 		recommendDropDownObject.grid(row=rowIndex, column=3, sticky=W)
-
-
 		rowIndex+=1
 
 

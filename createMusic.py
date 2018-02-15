@@ -27,17 +27,19 @@ def createMelody(process, measure_beat_size, loop=1):
 		for chord_index in range(len(process)):
 			chord = process[chord_index]
 			print("chord:", chord)
-			print("measure_beat:", beats[chord_index])
+			print("measure_beat:", beats[len(process)*loop_index + chord_index])
 			# Make melody according to beats
 			
 			scale = sc.make_scale(chord[0],chord[1])   # I need to fix it!!!
-			measure_notes = generate_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
+			measure_notes = generate_notes(process, chord_index, beats[len(process)*loop_index + chord_index], relative_notes_index, keys, notes)
 			print("measure_notes:", measure_notes)
 			# relative_measure_notes_index = make_relative_notes_index(scale, measure_notes)
 			notes.append(measure_notes)
 			# relative_notes_index.append(relative_measure_notes_index)
 
-			print("-------------" + str(chord_index+1 + len(process)*loop_index) + "/" + str(len(process) + len(process)*loop) + ("-------------"))
+			print("-------------" + str(chord_index+1 + len(process)*loop_index) + "/" + str(len(process)*loop) + ("-------------"))
+		print("-------------" + str(loop_index+1) + "/" + str(loop) + ("-------------"))
+		print()
 
 	print('len(notes) / len(beats): ', len(notes), ' / ', len(beats))
 	melody = zip_note_beat(notes, beats)
@@ -252,8 +254,14 @@ def apply_tride_notes_probability(probability, scale, keys, accum_beat):
 
 def zip_note_beat(notes, beats):
 	melody = []
+	index = 0
 	for i in zip(notes,beats):
+		print("measure_beat:", i[0])
+		print("measure_notes:", i[1])
+		print("-------------" + str(index+1) + "/" + str(len(beats)) + ("-------------"))
+		print()
 		melody.extend(tuple(zip(i[0],i[1])))
+		index += 1
 	return melody
 
 

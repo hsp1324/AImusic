@@ -2,41 +2,44 @@ import pysynth
 import random as rd
 import scales as sc
 import os.path
+import beat as bt
 from pydub import AudioSegment
 import sys, getopt
 
-
+# 끝날때 마무리, 높음은 나오면 좋을 것 같아
 #relative_next_note_index: how far the note away from do on the major
 
 # For more info, read octave_adjust in scales.py
 octave_adjust = sc.octave_adjust
 
 # Dinimished code cannot be handled yet
-def createMelody(process, whole_beat):
+def createMelody(process, measure_beat_size, loop=1):
 	notes = []
-	beats = []
+	beats = bt.Beat(process, loop, measure_beat_size=1)
 	relative_notes_index = []
 	first_chord = process[0]
 	
 	keys = sc.make_scale(first_chord[0],first_chord[1])
 	print('main keys: ', keys)
-	beats = generate_beats(process, whole_beat)
+	beats = beats.beats
 	print("------Generating Melody------")
-	for chord_index in range(len(process)):
-		chord = process[chord_index]
-		print("chord:", chord)
-		print("measure_beat:", beats[chord_index])
-		# Make melody according to beats
-		
-		scale = sc.make_scale(chord[0],chord[1])   # I need to fix it!!!
-		measure_notes = generate_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
-		print("measure_notes:", measure_notes)
-		# relative_measure_notes_index = make_relative_notes_index(scale, measure_notes)
-		notes.append(measure_notes)
-		# relative_notes_index.append(relative_measure_notes_index)
+	for loop_index in range(loop):
+		for chord_index in range(len(process)):
+			chord = process[chord_index]
+			print("chord:", chord)
+			print("measure_beat:", beats[chord_index])
+			# Make melody according to beats
+			
+			scale = sc.make_scale(chord[0],chord[1])   # I need to fix it!!!
+			measure_notes = generate_notes(process, chord_index, beats[chord_index], relative_notes_index, keys, notes)
+			print("measure_notes:", measure_notes)
+			# relative_measure_notes_index = make_relative_notes_index(scale, measure_notes)
+			notes.append(measure_notes)
+			# relative_notes_index.append(relative_measure_notes_index)
 
-		print("-------------" + str(chord_index+1) + "/" + str(len(process)) + ("-------------"))
+			print("-------------" + str(chord_index+1 + len(process)*loop_index) + "/" + str(len(process) + len(process)*loop) + ("-------------"))
 
+	print('len(notes) / len(beats): ', len(notes), ' / ', len(beats))
 	melody = zip_note_beat(notes, beats)
 	return melody
 
@@ -77,13 +80,16 @@ def generate_notes(process, chord_index, measure_beat, relative_notes_index, key
 				
 
 		else:  # make the rest of the measures imitating the first measure
-			comparitive_note_index = relative_notes_index[chord_index%2][iter_beat_index]
-			keys_index = keys.index(do) + comparitive_note_index
-			comparitive_note = keys[keys_index]
-			if(comparitive_note in scale):
-				probability[keys_index] += 20
-			else:
-				probability[keys_index] += 10
+			try:
+				comparitive_note_index = relative_notes_index[chord_index%2][iter_beat_index]
+				keys_index = keys.index(do) + comparitive_note_index
+				comparitive_note = keys[keys_index]
+				if(comparitive_note in scale):
+					probability[keys_index] += 20
+				else:
+					probability[keys_index] += 10
+			except:
+				pass
 
 
 			##### got it from first measure######
@@ -108,13 +114,13 @@ def generate_notes(process, chord_index, measure_beat, relative_notes_index, key
 
 
 
-def generate_measure_beat(whole_beat):
+def generate_measure_beat(measure_beat_size):
 	beat_choice = [4,8]
 	accumulated_beat = 0
 	measure_beat = []
 	probability = [1]*2
-	while(accumulated_beat < whole_beat):
-		if(accumulated_beat >= whole_beat - 1/8):
+	while(accumulated_beat < measure_beat_size):
+		if(accumulated_beat >= measure_beat_size - 1/8):
 			next_beat = 8
 		else:
 			### Tried to repeat the beats ###
@@ -130,17 +136,69 @@ def generate_measure_beat(whole_beat):
 
 
 
-def generate_relative_beat(i, beats):
-	beat_type = beats[i%2]
-	return beat_type
+def generate_relative_beat(index, beats):
+	# 반전  check
+	# 나누기
+	# 세잎단음표
+	# 앞붙점 뒷붙점
+	original_beat = beats[index-2]
+	return_beat = original_beat
+
+	##### make a single beat triplet ######
+	# select_beat_index = rd.randint(0,len(original_beat)-1)
+	# return_beat = make_triplet(select_beat_index, original_beat)
+	##### make a single beat triplet ######
+
+
+	##### reversing Beat #####
+	can_reverse = False
+	reverse_start_index = 0
+	accum_beat = 0
+	for index in range(len(return_beat)):
+		accum_beat += 1/return_beat[index]
+		if(accum_beat == 1/2):
+			can_reverse = True
+			reverse_start_index = index
+			break
+	if(can_reverse == True):
+		return_beat = reversing_half_beat(reverse_start_index, return_beat)
+	##### reversing Beat #####
+
+
+	return return_beat
 
 
 
-def generate_beats(process, whole_beat):
+def reversing_half_beat(center_index, original_beat):
+	return_beat = []
+	reverse_start_index = center_index
+	while(reverse_start_index >= 0):
+		return_beat.append(original_beat[reverse_start_index])
+		reverse_start_index -= 1
+
+	end_index = len(original_beat)-1
+	while(end_index > center_index):
+		return_beat.append(original_beat[end_index])
+		end_index -= 1
+
+	return return_beat
+
+
+def make_triplet(index, beat):
+	index_beat = beat[index]
+	new_beat = []
+	if index == len(beat)-1:
+		new_beat = beat[:index] + [index_beat*3]*3
+	else:
+		new_beat = beat[:index] + [index_beat*3]*3 + beat[index+1:]
+	return new_beat
+
+
+def generate_beats(process, measure_beat_size):
 	beats = []
 	for i in range(len(process)):
 		if(i == 0 or i == 1):
-			measure_beat = generate_measure_beat(whole_beat)
+			measure_beat = generate_measure_beat(measure_beat_size)
 		else:
 			measure_beat = generate_relative_beat(i, beats)
 		beats.append(measure_beat)
@@ -171,6 +229,7 @@ def apply_up_down_tendancy(probability, measure_notes, keys):
 		elif(prev_prev_note_index - prev_note_index == 1 and prev_note_index != 0):
 			probability[prev_note_index-1] += 5
 	return None
+
 
 
 
@@ -297,9 +356,9 @@ def main(argv):
 	outputfile = ''
 	process_name = ''
 	try:
-		opts, args = getopt.getopt(argv,"hp:t:",["ifile=","ofile="])
+		opts, args = getopt.getopt(argv,"hp:t:l:",["ifile=","ofile=","lfile="])
 	except getopt.GetoptError:
-		print('Error test.py -p <base> -t <beat>')
+		print('Error test.py -p <base> -t <beat> -l <loop>')
 		sys.exit(2)
 
 	for opt, arg in opts:
@@ -317,20 +376,22 @@ def main(argv):
 			process_name = arg
 		elif opt in ("-t", "--ofile"):
 			tempo = eval(arg)
+		elif opt in ("-l", "--lfile"):
+			loop = eval(arg)
 
 
 
-	new_melody = createMelody(process, tempo)
+	new_melody = createMelody(process, tempo, loop=loop)
 	if process_name == 'process0':
-		new_base = sc.create_base0(process, "Canon")
+		new_base = sc.create_base0(process*loop, "Canon")
 	elif process_name == 'process2':
-		new_base = sc.create_base1(process, "Love_is_an_open_door")
+		new_base = sc.create_base1(process*loop, "Love_is_an_open_door")
 	elif process_name == 'process3':
-		new_base = sc.create_base0(process, "R&B")
+		new_base = sc.create_base0(process*loop, "R&B")
 	elif process_name == 'process4':
-		new_base = sc.create_base0(process, "Canon")
+		new_base = sc.create_base0(process*loop, "Canon")
 	elif process_name == 'process5':
-		new_base = sc.create_base0(process, "Canon")
+		new_base = sc.create_base0(process*loop, "Canon")
 
 
 	# creating file name
@@ -361,10 +422,10 @@ if __name__== "__main__":
 
 
 
-def generate_from_shell(process, tempo=1):
+def generate_from_shell(process, tempo=1, loop=1):
 	process_name = "shell_test"
 
-	new_melody = createMelody(process, tempo)
+	new_melody = createMelody(process, tempo, loop)
 	new_base = sc.create_base0(process, "Canon")
 
 

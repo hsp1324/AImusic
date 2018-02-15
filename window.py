@@ -1,6 +1,12 @@
 from tkinter import *
 import createMusic as cm
 
+
+
+# make more space 
+
+
+
 class Window(Frame):
 
 	def __init__(self, master = None):
@@ -34,7 +40,7 @@ class Window(Frame):
 		# quitButton.place(x=0, y=0)
 		self.makeMenu()
 
-		label_title = Label(self, text="Hello AI Music Generator!!!", font=("Helvetica", 20))
+		label_title = Label(self, text="Hello AI Music Generator", font=("Helvetica", 20))
 		label_title.grid(row=rowIndex, columnspan=5)
 		rowIndex+=1
 
@@ -228,8 +234,8 @@ class Window(Frame):
 		self.label_status.configure(text="Generating..........", bg="yellow")
 		self.label_status.update()
 		try:
-			process = self.process * self.num_of_loop
-			cm.generate_from_shell(process)
+			process = self.process # * self.num_of_loop
+			cm.generate_from_shell(process, loop=self.num_of_loop)
 			self.label_status.configure(text="Generating Done !!!", bg="lawn green")
 		except:
 			self.label_status.configure(text="Something Wrong !!!", bg="red")

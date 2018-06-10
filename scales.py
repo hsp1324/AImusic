@@ -1,6 +1,7 @@
 import pysynth
 import random as rd
 from pydub import AudioSegment
+import music21 as m21
 
 all_note1 = ['c','c#','d','d#','e','f','f#','g','g#','a','a#','b']
 all_note2 = ['c','db','d','eb','e','f','gb','g','ab','a','bb','b']
@@ -218,47 +219,22 @@ def half_down(note):
 octave_adjust = 7
 
 def make_scale(root, scale, octave=4):
-	keys = []
-	if octave == 4:
-		if(root in all_note1):    # #_version
-			root_index = all_note1.index(root)
-			keys = [i+'3' for i in all_note1[root_index:]] + all_note1 + [i+'5' for i in all_note1] + [i+'6' for i in all_note2]
-		elif(root in all_note2):  # b_version
-			root_index = all_note2.index(root)
-			keys = [i+'3' for i in all_note2[root_index:]] + all_note2 + [i+'5' for i in all_note2] + [i+'6' for i in all_note2]
-		else:
-			raise Exception('Not a key')
-
-	else:
-		all_note = None
-		if(root in all_note1):    # #_version
-			all_note = all_note1
-		elif(root in all_note2):  # b_version
-			all_note = all_note2
-		else:
-			raise Exception('Not a key')
-
-		root_index = all_note.index(root)
-		keys = [i+str(octave-1) for i in all_note[root_index:]] + \
-			   [i+str(octave)   for i in all_note] + \
-			   [i+str(octave+1) for i in all_note] + \
-			   [i+str(octave+2) for i in all_note]
 
 	scale_notes = []
 	# print('len:', len(keys), keys)
-	if('major' in scale):
-		scale_notes = [keys[0],   keys[2],   keys[4],   keys[5],   keys[7],   keys[9],   keys[11],
-					   keys[0+12],keys[2+12],keys[4+12],keys[5+12],keys[7+12],keys[9+12],keys[11+12],
-					   keys[0+24],keys[2+24],keys[4+24],keys[5+24],keys[7+24],keys[9+24],keys[11+24]]
-	elif('minor' in scale):
-		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[7],   keys[8],   keys[10],
-					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[7+12],keys[8+12],keys[10+12],
-					   keys[0+24],keys[2+24],keys[3+24],keys[5+24],keys[7+24],keys[8+24],keys[10+24]]
-	elif('altered' in scale):
+	if('major' is scale):
+		new_scale = m21.scale.MajorScale(root)
+		scale_notes = [str(p) for p in new_scale.pitches(root + str(octave), root + str(octave+2))]
+
+	elif('minor' is scale):
+		new_scale = m21.scale.MinorScale(root)
+		scale_notes = [str(p) for p in new_scale.pitches(root + str(octave), root + str(octave+2))]
+
+	elif('altered' is scale):
 		scale_notes = [keys[0],   keys[1],   keys[3],   keys[4],   keys[6],   keys[8],   keys[10],
 					   keys[0+12],keys[1+12],keys[3+12],keys[4+12],keys[6+12],keys[8+12],keys[10+12],
 					   keys[0+24],keys[1+24],keys[3+24],keys[4+24],keys[6+24],keys[8+24],keys[10+24]]
-	elif('diminished' in scale):
+	elif('diminished' is scale):
 		scale_notes = [keys[0],   keys[2],   keys[3],   keys[5],   keys[6],   keys[8],   keys[9],   keys[11],
 					   keys[0+12],keys[2+12],keys[3+12],keys[5+12],keys[6+12],keys[8+12],keys[9+12],keys[11+12],
 					   keys[0+24],keys[2+24],keys[3+24],keys[5+24],keys[6+24],keys[8+24],keys[9+24],keys[11+24]]

@@ -1,4 +1,5 @@
 import random as rd
+import music21 as m21
 
 class Beat:
 	def __init__(self, process, loop, measure_beat_size=1):

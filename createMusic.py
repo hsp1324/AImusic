@@ -207,14 +207,41 @@ d_major_scale = ['d','e','f#','g','']
 
 test = [['c*',4],['e*',4],['g*',2],['c5*',2],['r',1]]
 
-base = [['c3*',4] , ['g3*',4] , ['c4*',4], ['r',4],
-		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4],
-		['a2*',4], ['e3*',4] , ['a3*',4] , ['r',4],
-		['e2*',4], ['b2*',4], ['e3*',4] , ['r',4],
-		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
-		['c2*',4], ['g2*',4], ['c3*',4] , ['r',4],
-		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
-		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4]]
+# base = [['c3*',4] , ['g3*',4] , ['c4*',4], ['r',4],
+# 		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4],
+# 		['a2*',4], ['e3*',4] , ['a3*',4] , ['r',4],
+# 		['e2*',4], ['b2*',4], ['e3*',4] , ['r',4],
+# 		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
+# 		['c2*',4], ['g2*',4], ['c3*',4] , ['r',4],
+# 		['f2*',4], ['c3*',4] , ['f3*',4] , ['r',4],
+# 		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4]]
+
+
+base = [['c3',1], ['g3',1], ['c4',1], ['r',1],
+		['g2',1], ['d3',1], ['g3',1], ['r',1],
+		['a2',1], ['e3',1], ['a3',1], ['r',1],
+		['e2',1], ['b2',1], ['e3',1], ['r',1],
+		['f2',1], ['c3',1], ['f3',1], ['r',1],
+		['c2',1], ['g2',1], ['c3',1], ['r',1],
+		['f2',1], ['c3',1], ['f3',1], ['r',1],
+		['g2',1], ['d3',1], ['g3',1], ['r',1]]
+
+def make_base(base):
+
+	base_melody = stream.Stream()
+
+	for itr_note in base:
+		name = itr_note[0]
+		duration = itr_note[1]
+		if name == 'r':
+			temp_note = note.Rest(type='quarter')
+		else:
+			temp_note = note.Note(name, quarterLength=duration)
+		base_melody.append(temp_note)
+	return base_melody
+
+
+
 
 smpl_melody = [['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
 			   ['c',4],['d',4],['e',4],['f',4],['g',4],['f',4],['e',4],['d',4],
@@ -296,7 +323,18 @@ def main(argv):
 			print("R&B - process2 - 1")
 			print("joy1 - process3 - 1")
 			print("joy2 - process4 - 1")
-		
+
+			print("s = stream.Score(id='mainScore')")
+			print("new_melody1 = createMelody(process0, 4)")
+			print("new_melody2 = createMelody(process0, 4)")
+			print("new_base = make_base(base)")
+			print("s.insert(new_melody1)")
+			print("s.insert(new_melody2)")
+			print("s.insert(new_melody1)")
+			print("s.insert(new_base)")
+			print("s.show('midi')")
+
+
 			sys.exit()
 		elif opt in ("-p", "--ifile"):
 			process = eval(arg)

@@ -1,3 +1,4 @@
+from music21 import *
 import pysynth
 import random as rd
 import scales as sc
@@ -13,13 +14,13 @@ import sys, getopt
 octave_adjust = sc.octave_adjust
 
 # Dinimished code cannot be handled yet
-def createMelody(process, measure_beat_size, loop=1):
+def createMelody(process, measure_length, loop=1):
 	notes = []
-	beats = bt.Beat(process, loop, measure_beat_size=1)
+	beats = bt.Beat(process, loop, measure_length=4)
 	relative_notes_index = []
 	first_chord = process[0]
 	
-	keys = sc.make_scale(first_chord[0],first_chord[1])
+	keys = sc.make_scale(first_chord[0],first_chord[1])  # ex) first_chord[0] = c , first_chord[1] = major
 	print('main keys: ', keys)
 	beats = beats.beats
 	print("------Generating Melody------")
@@ -42,8 +43,8 @@ def createMelody(process, measure_beat_size, loop=1):
 		print()
 
 	print('len(notes) / len(beats): ', len(notes), ' / ', len(beats))
-	melody = zip_note_beat(notes, beats)
-	return melody
+	main_stream = zip_note_beat(notes, beats)
+	return main_stream
 
 
 
@@ -116,97 +117,6 @@ def generate_notes(process, chord_index, measure_beat, relative_notes_index, key
 
 
 
-def generate_measure_beat(measure_beat_size):
-	beat_choice = [4,8]
-	accumulated_beat = 0
-	measure_beat = []
-	probability = [1]*2
-	while(accumulated_beat < measure_beat_size):
-		if(accumulated_beat >= measure_beat_size - 1/8):
-			next_beat = 8
-		else:
-			### Tried to repeat the beats ###
-			# if(accumulated_beat == 0.5):
-			# 	first_beat = measure_beat[0]
-			# 	first_beat_index = beat_choice.index(first_beat)
-			# 	probability[first_beat_index] += 1
-			next_beat = rd.choices(beat_choice, weights=probability, k=1)[0]
-		measure_beat.append(next_beat)
-		accumulated_beat += 1.0 / next_beat
-
-	return measure_beat
-
-
-
-def generate_relative_beat(index, beats):
-	# 반전  check
-	# 나누기
-	# 세잎단음표
-	# 앞붙점 뒷붙점
-	original_beat = beats[index-2]
-	return_beat = original_beat
-
-	##### make a single beat triplet ######
-	# select_beat_index = rd.randint(0,len(original_beat)-1)
-	# return_beat = make_triplet(select_beat_index, original_beat)
-	##### make a single beat triplet ######
-
-
-	##### reversing Beat #####
-	can_reverse = False
-	reverse_start_index = 0
-	accum_beat = 0
-	for index in range(len(return_beat)):
-		accum_beat += 1/return_beat[index]
-		if(accum_beat == 1/2):
-			can_reverse = True
-			reverse_start_index = index
-			break
-	if(can_reverse == True):
-		return_beat = reversing_half_beat(reverse_start_index, return_beat)
-	##### reversing Beat #####
-
-
-	return return_beat
-
-
-
-def reversing_half_beat(center_index, original_beat):
-	return_beat = []
-	reverse_start_index = center_index
-	while(reverse_start_index >= 0):
-		return_beat.append(original_beat[reverse_start_index])
-		reverse_start_index -= 1
-
-	end_index = len(original_beat)-1
-	while(end_index > center_index):
-		return_beat.append(original_beat[end_index])
-		end_index -= 1
-
-	return return_beat
-
-
-def make_triplet(index, beat):
-	index_beat = beat[index]
-	new_beat = []
-	if index == len(beat)-1:
-		new_beat = beat[:index] + [index_beat*3]*3
-	else:
-		new_beat = beat[:index] + [index_beat*3]*3 + beat[index+1:]
-	return new_beat
-
-
-def generate_beats(process, measure_beat_size):
-	beats = []
-	for i in range(len(process)):
-		if(i == 0 or i == 1):
-			measure_beat = generate_measure_beat(measure_beat_size)
-		else:
-			measure_beat = generate_relative_beat(i, beats)
-		beats.append(measure_beat)
-	return beats
-
-
 
 def apply_up_down_tendancy(probability, measure_notes, keys):
 	prev_note = measure_notes[-1]
@@ -253,16 +163,25 @@ def apply_tride_notes_probability(probability, scale, keys, accum_beat):
 
 
 def zip_note_beat(notes, beats):
-	melody = []
+	main_stream = stream.Stream()
 	index = 0
 	for i in zip(notes,beats):
-		print("measure_beat:", i[0])
-		print("measure_notes:", i[1])
-		print("-------------" + str(index+1) + "/" + str(len(beats)) + ("-------------"))
-		print()
-		melody.extend(tuple(zip(i[0],i[1])))
-		index += 1
-	return melody
+		num_notes = len(i[0])
+		note_names = i[0]
+		note_beats = i[1]
+		print("i: ", i)
+		for note_index in range(num_notes):
+			note_name = note_names[note_index]
+			note_beat = note_beats[note_index]
+			print("note_name:", note_name)
+			print("note_beat:", note_beat)
+			print("-------------" + str(index+1) + "/" + str(len(beats)) + ("-------------"))
+			print()
+			new_note = note.Note(note_name)
+			new_note.quarterLength = note_beat
+			main_stream.append(new_note)
+			index += 1
+	return main_stream
 
 
 
@@ -388,8 +307,8 @@ def main(argv):
 			loop = eval(arg)
 
 
-
-	new_melody = createMelody(process, tempo, loop=loop)
+	new_melody = createMelody(process0, 4, loop=1)  # temp for testing
+	# new_melody = createMelody(process, tempo, loop=loop)   # this is main
 	if process_name == 'process0':
 		new_base = sc.create_base0(process*loop, "Canon")
 	elif process_name == 'process2':
@@ -456,6 +375,9 @@ def generate_from_shell(process, tempo=1, loop=1):
 	combined = sound1.overlay(sound2)
 
 	combined.export(mixed_filename, format='wav')
+
+
+
 
 
  

@@ -15,9 +15,7 @@ class Beat:
 
 
 	def repeat_beat(self, loop_index, repeat_range=0):
-		print("repeat_range: ", repeat_range)
 		for i in range(len(self.process)):
-			print('i: ', i)
 			if(i in range(repeat_range+1)):
 				measure_beat = self.random_beat()
 			else:
@@ -36,7 +34,7 @@ class Beat:
 	# 	return None
 
 
-
+	# Return a random measure beat
 	def random_beat(self):
 		beat_choice = [4,8]
 		accumulated_beat = 0
@@ -65,8 +63,6 @@ class Beat:
 		# 나누기
 		# 세잎단음표
 		# 앞붙점 뒷붙점
-		print('index: ', index)
-		print('len(beats): ', len(self.beats))
 		if repeat_range == 0:
 			original_beat = self.beats[loop_index*len(self.process)]
 		else:

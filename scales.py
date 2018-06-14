@@ -367,3 +367,57 @@ def create_base1(process, name='new'):
 
 
 
+def create_base2(process, name='new'):
+	base_1 = []
+	base_2 = []
+	for chord in process:
+		scale = make_scale(chord[0],chord[1], 3)
+		do = scale[0+octave_adjust]
+		mi = scale[2+octave_adjust]
+		so = scale[4+octave_adjust]
+		base_1.append((do+'*',8))
+		base_1.append(('r',8))
+		base_2.append(('r',8))
+		base_2.append(('r',8))
+
+		base_1.append((so+'*',8))
+		base_1.append(('r',8))
+		base_2.append((mi+'*',8))
+		base_2.append(('r',8))
+
+		base_1.append(('r',8))
+		base_1.append(('r',8))
+		base_2.append(('r',8))
+		base_2.append(('r',8))
+
+		base_1.append((so+'*',8))
+		base_1.append(('r',8))
+		base_2.append((mi+'*',8))
+		base_2.append(('r',8))
+	##### Tried to make last chord different as a ending chord #####
+	# last_chord = process[-1]
+	# last_scale = make_scale(last_chord[0],last_chord[1])
+	# do = last_scale[0]
+	# mi = last_scale[2]
+	# so = last_scale[4]
+	# base_1.append((so,8))
+	# base_1.append(('r',8))
+	# base_1.append((mi,8))
+	# base_1.append(('r',8))
+	# base_1.append((do,4))
+	# base_2.append((mi,8))
+	# base_2.append(('r',8))
+	# base_2.append((do,8))
+	# base_2.append(('r',8))
+
+	pysynth.make_wav(base_1, boost = 1.5, fn = "base/base_" + name + "_1.wav")
+	pysynth.make_wav(base_2, boost = 1.5, fn = "base/base_" + name + "_2.wav")
+
+	sound1 = AudioSegment.from_file("base/base_" + name + "_1.wav")
+	sound2 = AudioSegment.from_file("base/base_" + name + "_2.wav")
+	combined = sound1.overlay(sound2)
+	final_name = "base/base_" + name + ".wav"
+	combined.export(final_name, format='wav')
+	return final_name
+
+

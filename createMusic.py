@@ -7,17 +7,21 @@ from pydub import AudioSegment
 import sys, getopt
 
 # 끝날때 마무리, 높음은 나오면 좋을 것 같아
-#relative_next_note_index: how far the note away from do on the major
+# relative_next_note_index: how far the note away from do on the major
+
+# 4번 반복되면 2번 같은 느낌, 나머지 2번은 반전  캐논 같은 경우 
 
 # For more info, read octave_adjust in scales.py
 octave_adjust = sc.octave_adjust
+
+
 
 # Dinimished code cannot be handled yet
 def createMelody(process, measure_beat_size, loop=1):
 	notes = []
 	beats = bt.Beat(process, loop, measure_beat_size=1)
 	relative_notes_index = []
-	first_chord = process[0]
+	first_chord = process[0]  # first_chord[0] == C D E...  first_chord[1] == major minor ...
 	
 	keys = sc.make_scale(first_chord[0],first_chord[1])
 	print('main keys: ', keys)
@@ -41,7 +45,6 @@ def createMelody(process, measure_beat_size, loop=1):
 		print("-------------" + str(loop_index+1) + "/" + str(loop) + ("-------------"))
 		print()
 
-	print('len(notes) / len(beats): ', len(notes), ' / ', len(beats))
 	melody = zip_note_beat(notes, beats)
 	return melody
 
@@ -209,10 +212,15 @@ def generate_beats(process, measure_beat_size):
 
 
 def apply_up_down_tendancy(probability, measure_notes, keys):
-	prev_note = measure_notes[-1]
+	''' 
+	Increment probability of neighbor note of last note
+	If the previous two notes were incrementing, add bonus probability
+	Example:  if last note was E than increment probability of 5 for D and F
+	'''
+	prev_note = measure_notes[-1]  # get last note
 	prev_note_index = keys.index(prev_note)
 
-	probability[prev_note_index] += 5
+	probability[prev_note_index] += 5 # Increment the posibility of play same note
 	# increase left, right notes' probability of prev_note
 	if(prev_note_index == 0):
 		probability[prev_note_index+1] += 5
@@ -256,10 +264,6 @@ def zip_note_beat(notes, beats):
 	melody = []
 	index = 0
 	for i in zip(notes,beats):
-		print("measure_beat:", i[0])
-		print("measure_notes:", i[1])
-		print("-------------" + str(index+1) + "/" + str(len(beats)) + ("-------------"))
-		print()
 		melody.extend(tuple(zip(i[0],i[1])))
 		index += 1
 	return melody
@@ -400,6 +404,8 @@ def main(argv):
 		new_base = sc.create_base0(process*loop, "Canon")
 	elif process_name == 'process5':
 		new_base = sc.create_base0(process*loop, "Canon")
+	elif process_name == 'process6':
+		new_base = sc.create_base2(process*loop, "Canon")
 
 
 	# creating file name

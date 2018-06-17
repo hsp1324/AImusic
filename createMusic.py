@@ -4,6 +4,7 @@ import scales as sc
 import os.path
 import beat as bt
 import sys, getopt
+from base import *
 
 # 끝날때 마무리, 높음은 나오면 좋을 것 같아
 # relative_next_note_index: how far the note away from do on the major
@@ -55,7 +56,10 @@ def createMelody(process, measure_length, loop=1):
 def generate_notes(process, chord_index, measure_beat, relative_notes_index, keys, notes):
 	# Make Note accordingly
 	chord = process[chord_index]
+	print("chord[0]: ", chord[0])
+	print("chord[1]: ", chord[1])
 	scale = sc.make_scale(chord[0],chord[1])
+	print("scale: ", scale)
 	accum_beat = 0
 	measure_notes = []
 	relative_measure_notes_index = []
@@ -224,14 +228,14 @@ test = [['c*',4],['e*',4],['g*',2],['c5*',2],['r',1]]
 # 		['g2*',4], ['d3*',4] , ['g3*',4] , ['r',4]]
 
 
-base = [['c3',1], ['g3',1], ['c4',1], ['r',1],
-		['g2',1], ['d3',1], ['g3',1], ['r',1],
-		['a2',1], ['e3',1], ['a3',1], ['r',1],
-		['e2',1], ['b2',1], ['e3',1], ['r',1],
-		['f2',1], ['c3',1], ['f3',1], ['r',1],
-		['c2',1], ['g2',1], ['c3',1], ['r',1],
-		['f2',1], ['c3',1], ['f3',1], ['r',1],
-		['g2',1], ['d3',1], ['g3',1], ['r',1]]
+# base = [['c3',1], ['g3',1], ['c4',1], ['r',1],
+# 		['g2',1], ['d3',1], ['g3',1], ['r',1],
+# 		['a2',1], ['e3',1], ['a3',1], ['r',1],
+# 		['e2',1], ['b2',1], ['e3',1], ['r',1],
+# 		['f2',1], ['c3',1], ['f3',1], ['r',1],
+# 		['c2',1], ['g2',1], ['c3',1], ['r',1],
+# 		['f2',1], ['c3',1], ['f3',1], ['r',1],
+# 		['g2',1], ['d3',1], ['g3',1], ['r',1]]
 
 def make_base(base):
 
@@ -390,9 +394,9 @@ def generate_from_shell(process, measure_length=4, loop=1):
 	process_name = "shell_test"
 
 	new_stream = stream.Score(id='mainScore')
-	new_melody1 = createMelody(process, 4)
-	new_base = make_base(base)
-	new_melody2 = createMelody(process, 4)
+	new_melody1 = createMelody(process, 4, loop)
+	new_base = Base(process, loop).base
+	new_melody2 = createMelody(process, 4, loop)
 	new_stream.insert(new_melody1)
 	new_stream.insert(new_melody2)
 	new_stream.insert(new_base)

@@ -125,15 +125,12 @@ class Window(Frame):
 
 
 		self.label_process = Label(self, text="Create your own music", anchor=W, justify=LEFT, width=28, borderwidth=10, highlightthickness=2, highlightbackground="black")
-		self.label_process.grid(row=rowIndex, rowspan=5, columnspan=300, sticky=W)
+		self.label_process.grid(row=rowIndex, rowspan=3, columnspan=300, sticky=W)
 
-
-		sb1 = Scrollbar(self)
-		sb1.grid(row=2, column=2, columnspan=2)
 
 		generateButton = Button(self, text="Generate", command=self.generateMusic)
 		generateButton.grid(row=rowIndex, column=4)
-		rowIndex+=5
+		rowIndex+=3
 
 
 
@@ -257,12 +254,12 @@ class Window(Frame):
 	def generateMusic(self):
 		self.label_status.configure(text="Generating..........", bg="yellow")
 		self.label_status.update()
-		try:
-			process = self.process # * self.num_of_loop
-			self.stream = cm.generate_from_shell(process, loop=self.num_of_loop)
-			self.label_status.configure(text="Generating Done !!!", bg="lawn green")
-		except:
-			self.label_status.configure(text="Something Wrong !!!", bg="red")
+		# try:
+		process = self.process # * self.num_of_loop
+		self.stream = cm.generate_from_shell(process, loop=self.num_of_loop)
+		self.label_status.configure(text="Generating Done !!!", bg="lawn green")
+		# except:
+		# 	self.label_status.configure(text="Something Wrong !!!", bg="red")
 
 
 

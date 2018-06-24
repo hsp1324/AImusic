@@ -77,7 +77,7 @@ def vectorize(part):
 	measures = part.getElementsByClass('Measure')
 	total_num_measure = len(measures)
 	allNotes = part.recurse().notes
-	vector = np.zeros([len(allNotes), vector_size])  # np.empty or np.zeros
+	vector = np.zeros([1, len(allNotes), vector_size])  # np.empty or np.zeros
 
 	accum_duration = 0
 	vector_index = 0
@@ -90,7 +90,7 @@ def vectorize(part):
 			continue
 
 		for iter_item in allNotes:
-			vector[vector_index][0] = 1  # Show that it is not rest
+			vector[0][vector_index][0] = 1  # Show that it is not rest
 			iter_note = None
 			if type(iter_item) is note.Note:
 				iter_note = iter_item
@@ -116,10 +116,10 @@ def vectorize(part):
 
 			iter_note_index_in_vector = iter_octave * 12 + note_num_pos + 1  # add 1 for 'not rest'
 
-			vector[vector_index][iter_note_index_in_vector] = 1
-			vector[vector_index][measure_at_pos] = measure_index
-			vector[vector_index][measure_left_pos] = total_num_measure - measure_index - 1
-			vector[vector_index][duration_pos] = iter_duration  # Might want to introduce accum_duration
+			vector[0][vector_index][iter_note_index_in_vector] = 1
+			vector[0][vector_index][measure_at_pos] = measure_index
+			vector[0][vector_index][measure_left_pos] = total_num_measure - measure_index - 1
+			vector[0][vector_index][duration_pos] = iter_duration  # Might want to introduce accum_duration
 
 			vector_index += 1
 
@@ -178,6 +178,7 @@ def name_to_number(name):
 summer = converter.parse("Summer_Joe_Hisaishi.mxl")
 part1 = summer.getElementsByClass('Part')[0]
 measures1 = part1.getElementsByClass('Measure')
+allNotes1 = measures1.recurse().notes
 vector1 = vectorize(part1)
 
 part2 = summer.getElementsByClass('Part')[1]

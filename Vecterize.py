@@ -1,12 +1,23 @@
 from music21 import *
 import numpy as np
+from fractions import Fraction
+from collections import Counter
 
 #c0 - b8
 #vector size = 1(not rest) + 12 * 9(number of notes) + 1(duration) + 1(measure at) + 1(measure left)
 
+""" 
+Duration
+1/12, 0.0625, 0.125, 0.1875, 0.375, 0.625, 0.875,
+1/6,  0.25, 1/3, 0.5, 2/3,  0.75, 5/6,  1, 7/6, 1.25, 4/3,  1.5, 5/3,  1.75, 11/6, 2,
+13/6, 2.25, 7/3, 2.5, 8/3, 2.75, 17/6, 3, 19/6, 3.25, 10/3, 3.5, 11/3, 3.75, 23/6, 4, 6
+"""
 
-vector_size = 1 + 12*9 + 1 + 1 + 1
-measure_at_pos = 1 + 12*9
+
+# vector_size = 1 + 12*9 + 1 + 1 + 1
+# measure_at_pos = 1 + 12*9
+vector_size = 12*9
+measure_at_pos = 12*9
 measure_left_pos = measure_at_pos + 1
 duration_pos = measure_left_pos + 1
 
@@ -90,7 +101,7 @@ def vectorize(part):
 			continue
 
 		for iter_item in allNotes:
-			vector[0][vector_index][0] = 1  # Show that it is not rest
+			# vector[0][vector_index][0] = 1  # Show that it is not rest
 			iter_note = None
 			if type(iter_item) is note.Note:
 				iter_note = iter_item
@@ -114,12 +125,12 @@ def vectorize(part):
 			if(iter_octave > 9):
 				print("Octave is too high")
 
-			iter_note_index_in_vector = iter_octave * 12 + note_num_pos + 1  # add 1 for 'not rest'
-
+			# iter_note_index_in_vector = iter_octave * 12 + note_num_pos + 1  # add 1 for 'not rest'
+			iter_note_index_in_vector = iter_octave * 12 + note_num_pos
 			vector[0][vector_index][iter_note_index_in_vector] = 1
-			vector[0][vector_index][measure_at_pos] = measure_index
-			vector[0][vector_index][measure_left_pos] = total_num_measure - measure_index - 1
-			vector[0][vector_index][duration_pos] = iter_duration  # Might want to introduce accum_duration
+			# vector[0][vector_index][measure_at_pos] = measure_index
+			# vector[0][vector_index][measure_left_pos] = total_num_measure - measure_index - 1
+			# vector[0][vector_index][duration_pos] = iter_duration  # Might want to introduce accum_duration
 
 			vector_index += 1
 
@@ -173,14 +184,38 @@ def name_to_number(name):
 
 	return pos
 
+# c = {x:allDuration.count(x) for x in allDuration}
+
+# summer = converter.parse("Summer_Joe_Hisaishi.mxl")
+# part1 = summer.getElementsByClass('Part')[0]
+# measures1 = part1.getElementsByClass('Measure')
+# allNotes1 = measures1.recurse().notes
+# vector1 = vectorize(part1)
+
+# part2 = summer.getElementsByClass('Part')[1]
+# measures2 = part2.getElementsByClass('Measure')
+# vector2 = vectorize(part2)
 
 
-summer = converter.parse("Summer_Joe_Hisaishi.mxl")
-part1 = summer.getElementsByClass('Part')[0]
-measures1 = part1.getElementsByClass('Measure')
-allNotes1 = measures1.recurse().notes
-vector1 = vectorize(part1)
+# song = converter.parse("Spring.mxl")
+# song_part = song.getElementsByClass('Part')
+# song_notes = song_part.recurse().notes
+# song_durations = [i.duration.quarterLength for i in song_notes]
+# song_counter = Counter(song_durations)
 
-part2 = summer.getElementsByClass('Part')[1]
-measures2 = part2.getElementsByClass('Measure')
-vector2 = vectorize(part2)
+
+
+def check_duration(name_of_song):
+	song = converter.parse(name_of_song)
+	song_part = song.getElementsByClass('Part')
+	song_notes = song_part.recurse().notes
+	song_durations = [i.duration.quarterLength for i in song_notes]
+	song_counter = Counter(song_durations)
+	return song_counter
+
+
+
+"""
+Duration
+0.0625, 1/10, 1/12, 0.125, 1/6, 0.25, 1/3, 0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0
+"""

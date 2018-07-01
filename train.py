@@ -73,12 +73,16 @@ model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy
 m = 1
 a0 = np.zeros((m, n_a))
 c0 = np.zeros((m, n_a))
-model.fit([vec.vector1, a0, c0], list(Y), epochs=5)
+model.fit([vec.vector1, a0, c0], list(Y), epochs=100)
 
 
 
 
-
+def one_hot(x):
+    x = K.argmax(x)
+    x = tf.one_hot(x, len(vec.allNotes1)) 
+    x = RepeatVector(1)(x)
+    return x
 
 
 
@@ -88,55 +92,22 @@ model.fit([vec.vector1, a0, c0], list(Y), epochs=5)
 
 # GRADED FUNCTION: music_inference_model
 
-def music_inference_model(LSTM_cell, densor, n_values = n_values, n_a = 64, Ty = 100):
-    """
-    Uses the trained "LSTM_cell" and "densor" from model() to generate a sequence of values.
-
-    Arguments:
-    LSTM_cell -- the trained "LSTM_cell" from model(), Keras layer object
-    densor -- the trained "densor" from model(), Keras layer object
-    n_values -- integer, umber of unique values
-    n_a -- number of units in the LSTM_cell
-    Ty -- integer, number of time steps to generate
-
-    Returns:
-    inference_model -- Keras model instance
-    """
-
-    # Define the input of your model with a shape 
+def music_inference_model(LSTM_cell, densor, one_hot, n_values = n_values, n_a = 64, Ty = 100):
     x0 = Input(shape=(1, n_values))
-
-    # Define s0, initial hidden state for the decoder LSTM
     a0 = Input(shape=(n_a,), name='a0')
     c0 = Input(shape=(n_a,), name='c0')
     a = a0
     c = c0
     x = x0
-
-    ### START CODE HERE ###
-    # Step 1: Create an empty list of "outputs" to later store your predicted values (≈1 line)
     outputs = []
-
-    # Step 2: Loop over Ty and generate a value at every time step
     for t in range(Ty):
-
-        # Step 2.A: Perform one step of LSTM_cell (≈1 line)
         a, _, c = LSTM_cell(x, initial_state=[a, c])
-
-        # Step 2.B: Apply Dense layer to the hidden state output of the LSTM_cell (≈1 line)
         out = densor(a)
-
-        # Step 2.C: Append the prediction "out" to "outputs". out.shape = (None, 78) (≈1 line)
         outputs.append(out)
-
-        # Step 2.D: Select the next value according to "out", and set "x" to be the one-hot representation of the
-        #           selected value, which will be passed as the input to LSTM_cell on the next step. We have provided 
-        #           the line of code you need to do this. 
         x =  Lambda(one_hot)(out)
-
-    # Step 3: Create model instance with the correct "inputs" and "outputs" (≈1 line)
     inference_model = Model(inputs=[x0,a0,c0],outputs=outputs)
-
-    ### END CODE HERE ###
-
     return inference_model
+
+
+
+inference_model = music_inference_model(LSTM_cell, densor, one_hot, n_values = vec.vector_size, n_a = 64, Ty = len(vec.allNotes1))

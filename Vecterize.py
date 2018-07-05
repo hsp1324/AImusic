@@ -33,21 +33,20 @@ measure_left_pos_in_vector = measure_at_pos_in_vector + 1
 def vectorize(part):
 	measures = part.getElementsByClass('Measure')
 	total_num_measures = len(measures)
-	allNotes = part.recurse().notes
-	vector = np.zeros([len(allNotes), vector_size])  # np.empty or np.zeros
+	num_all_notes = count_notes(part1)
+	vector = np.zeros([num_all_notes, vector_size])  # np.empty or np.zeros
 	total_accum_duration = 0
 	nth_index = -1
-	measure_index = -1
+	measure_index = 0
 	for measure in measures:
-		measure_notes = measure.recurse().notes
+		measure_index += 1
 		measure_accum_duration = 0
-		if len(measure_notes) == 0:
-			measure_index += 1
-			total_accum_duration+= 4
-			continue
+		for iter_item in measure:
+			if type(iter_item) not in [note.Note, note.Rest, chord.Chord]:
+				continue
+			else:
+				nth_index += 1
 
-		for iter_item in measure_notes:
-			nth_index += 1
 			iter_vector = vector[:][nth_index]
 			# vector[0][nth_index][0] = 1  # Show that it is not rest
 			iter_note = None
@@ -57,7 +56,7 @@ def vectorize(part):
 				iter_note = iter_item[-1]   # get the hightst picth in the chord for now. We will get all notes in chord in the future
 			elif type(iter_item) is note.Rest:
 				iter_vector[0] = 1  # Might vector[nth_index][0] = 1
-				iter_duration = iter_note.duration.quarterLength
+				iter_duration = iter_item.duration.quarterLength
 				duration_index = transform_duration_to_number(iter_duration)
 				iter_vector[duration_pos_in_vector + duration_index] = 1
 				iter_vector[measure_at_pos_in_vector] = measure_index
@@ -65,14 +64,6 @@ def vectorize(part):
 				measure_accum_duration += iter_duration
 				continue
 			else:
-				print("Type is neither note nor chord!!!!!!!!!!")
-				iter_vector[0] = 1  # Might vector[nth_index][0] = 1
-				iter_duration = 1.0
-				duration_index = transform_duration_to_number(iter_duration)
-				iter_vector[duration_pos_in_vector + duration_index] = 1
-				iter_vector[measure_at_pos_in_vector] = measure_index
-				iter_vector[measure_left_pos_in_vector] = total_num_measures - measure_index - 1
-				measure_accum_duration += iter_duration
 				continue
 
 			iter_name = iter_note.name
@@ -115,8 +106,6 @@ def vectorize(part):
 			measure_accum_duration += iter_duration
 
 		total_accum_duration += measure_accum_duration
-		measure_index += 1
-
 	return vector
 
 
@@ -192,12 +181,38 @@ def transform_duration_to_number(duration):
 
 
 
+
+def count_notes(part):
+	note_cnt = 0
+	rest_cnt = 0
+	chord_cnt = 0
+	measure_cnt = 0
+	duration_cnt = 0
+	measures = part.getElementsByClass('Measure')
+	for measure in measures:
+		measure_cnt += 1
+		for item in measure:
+			if type(item) is note.Note:
+				note_cnt += 1
+				duration_cnt += item.duration.quarterLength
+			elif type(item) is note.Rest:
+				rest_cnt += 1
+				duration_cnt += item.duration.quarterLength
+			elif type(item) is chord.Chord:
+				chord_cnt += 1
+				duration_cnt += item.duration.quarterLength
+			duration_cnt = round(duration_cnt, 6)
+		duration_cnt = round(duration_cnt, 5)
+	return note_cnt + rest_cnt + chord_cnt
+
+
+
 # c = {x:allDuration.count(x) for x in allDuration}
 
 summer = converter.parse("Summer_Joe_Hisaishi.mxl")
 part1 = summer.getElementsByClass('Part')[0]
 measures1 = part1.getElementsByClass('Measure')
-allNotes1 = measures1.recurse().notes
+num_all_notes1 = measures1.recurse().notes
 vector1 = vectorize(part1)
 
 # part2 = summer.getElementsByClass('Part')[1]
@@ -228,3 +243,5 @@ def check_duration(name_of_song):
 Duration
 0.0625, 1/10, 1/12, 0.125, 1/6, 0.25, 1/3, 0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0
 """
+
+

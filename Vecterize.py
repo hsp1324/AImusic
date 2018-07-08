@@ -26,14 +26,20 @@ duration_pos_in_vector = name_pos_in_vector + number_of_names
 measure_at_pos_in_vector = duration_pos_in_vector + number_of_possible_duration
 measure_left_pos_in_vector = measure_at_pos_in_vector + 1
 
+possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,6), 0.25, Fraction(1,3),
+						0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0]
 
+name_dic = {0:'C', 1:'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F', 6: 'F#', 7: 'G',
+				8: 'G#', 9: 'A', 10: 'A#', 11: 'B'}
 
-
+duration_dic = {}
+for i in range(len(possible_duration)):
+	duration_dic[i] = possible_duration[i]
 
 def vectorize(part):
 	measures = part.getElementsByClass('Measure')
 	total_num_measures = len(measures)
-	num_all_notes = count_notes(part1)
+	num_all_notes = count_notes(part)
 	vector = np.zeros([num_all_notes, vector_size])  # np.empty or np.zeros
 	total_accum_duration = 0
 	nth_index = -1
@@ -169,8 +175,6 @@ def transform_name_to_number(name):
 
 
 def transform_duration_to_number(duration):
-	possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,6), 0.25, Fraction(1,3),
-						0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0]
 	duration_index = 0
 	try:
 		duration_index = possible_duration.index(duration)
@@ -209,11 +213,11 @@ def count_notes(part):
 
 # c = {x:allDuration.count(x) for x in allDuration}
 
-summer = converter.parse("Summer_Joe_Hisaishi.mxl")
-part1 = summer.getElementsByClass('Part')[0]
-measures1 = part1.getElementsByClass('Measure')
-num_all_notes1 = measures1.recurse().notes
-vector1 = vectorize(part1)
+# summer = converter.parse("Summer_Joe_Hisaishi.mxl")
+# part1 = summer.getElementsByClass('Part')[0]
+# measures1 = part1.getElementsByClass('Measure')
+# num_all_notes1 = measures1.recurse().notes
+# vector1 = vectorize(part1)
 
 # part2 = summer.getElementsByClass('Part')[1]
 # measures2 = part2.getElementsByClass('Measure')
@@ -241,7 +245,33 @@ def check_duration(name_of_song):
 
 """
 Duration
-0.0625, 1/10, 1/12, 0.125, 1/6, 0.25, 1/3, 0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0
+[0.0625, 1/10, 1/12, 0.125, 1/6, 0.25, 1/3, 0.5, 0.75, 1.0, 1.5, 1.75, 2.0, 3.0, 4.0, 6.0]
 """
+
+
+
+def vector_to_note(vector):	
+	choosen_notes = []
+	length = vector.shape[-1]
+	for i in range(length):
+		iter_vector = vector[:,0,i]
+		octave = iter_vector[1:10]
+		name = iter_vector[10:22]
+		duration = iter_vector[22:38]
+
+		if(iter_vector[0] == 1):
+			choosen_duration = possible_duration[duration.argmax()]
+			choosen_note = note.Rest(quarterLength = 1)
+		else:
+			choosen_octave = str(octave.argmax())
+			choosen_name = name_dic[name.argmax()]
+			choosen_duration = possible_duration[duration.argmax()]
+			choosen_note = note.Note(choosen_name+choosen_octave, quarterLength = choosen_duration)
+		choosen_notes.append(choosen_note)
+
+	return choosen_notes
+
+
+
 
 

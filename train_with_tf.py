@@ -11,7 +11,7 @@ vector0 = vec.vectorize(part0)
 # vector1 = vec.vectorize(part1)
 
 learning_rate = 0.001
-training_iters = 100000
+training_iters = 1000
 batch_size = 1
 display_step = 10
 

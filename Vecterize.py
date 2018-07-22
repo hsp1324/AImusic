@@ -252,23 +252,23 @@ Duration
 
 def vector_to_note(vector):	
 	choosen_notes = []
+	vector = vector.reshape(len(vector[0,:]), len(vector[0,0,:]))
 	length = vector.shape[-1]
 	for i in range(length):
-		iter_vector = vector[:,0,i]
+		iter_vector = vector[:, i]
 		octave = iter_vector[1:10]
 		name = iter_vector[10:22]
 		duration = iter_vector[22:38]
-
-		if(iter_vector[0] == 1):
+		is_rest_name = np.append(np.array(iter_vector[0]), iter_vector[10:22])
+		if(is_rest_name.argmax() == 0):
 			choosen_duration = possible_duration[duration.argmax()]
-			choosen_note = note.Rest(quarterLength = 1)
+			choosen_note = note.Rest(quarterLength = choosen_duration)
 		else:
 			choosen_octave = str(octave.argmax())
 			choosen_name = name_dic[name.argmax()]
 			choosen_duration = possible_duration[duration.argmax()]
 			choosen_note = note.Note(choosen_name+choosen_octave, quarterLength = choosen_duration)
 		choosen_notes.append(choosen_note)
-
 	return choosen_notes
 
 

@@ -57,17 +57,16 @@ def lstm_cell_forward(xt, a_prev, c_prev, parameters):
     ### START CODE HERE ###
     # Concatenate a_prev and xt (≈3 lines)
     concat = np.zeros((n_x+n_a,m))
+    print(concat.shape)
     concat[: n_a, :] = a_prev
     concat[n_a :, :] = xt
-
  
     # Compute values for ft, it, cct, c_next, ot, a_next using the formulas given figure (4) (≈6 lines)
     ft = sigmoid(np.dot(Wf,concat)+bf)
     it = sigmoid(np.dot(Wi,concat)+bi)
-    ot = sigmoid(np.dot(Wo,concat)+bo)
     cct = np.tanh(np.dot(Wc,concat)+bc)
     c_next = ft*c_prev + it*cct
-    
+    ot = sigmoid(np.dot(Wo,concat)+bo)
     a_next = ot*np.tanh(c_next)
  
     # Compute prediction of the LSTM cell (≈1 line)
@@ -182,6 +181,11 @@ def lstm_cell_backward(da_next, dc_next, cache):
     dit = (dc_next*cct+ot*(1-np.square(np.tanh(c_next)))*cct*da_next)*it*(1-it)
     dft = (dc_next*c_prev+ot*(1-np.square(np.tanh(c_next)))*c_prev*da_next)*ft*(1-ft)
     
+    # Code equations (7) to (10) (≈4 lines)
+    dit = None
+    dft = None
+    dot = None
+    dcct = None
  
     # Compute parameters related derivatives. Use equations (11)-(14) (≈8 lines)
     dWf = np.dot(dft,np.concatenate((a_prev, xt), axis=0).T)
@@ -298,61 +302,30 @@ def softmax(x):
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-def relu(x):
-    x[x<0] = 0
-
 
 
 np.random.seed(1)
-
-# Make first a be Rest with quarterLength 4
-a0 = np.random.randn(40,1)
-# a0 = np.zeros([40,1])
-# a0[0] = 1
-# a0[vec.duration_pos_in_vector + vec.possible_duration.index(4)] = 1
-
-summer = converter.parse("Summer_Joe_Hisaishi.mxl")
-part1 = summer.getElementsByClass('Part')[0]
-measures1 = part1.getElementsByClass('Measure')
-num_all_notes1 = measures1.recurse().notes
-vector1 = vec.vectorize(part1)
-
 x = np.random.randn(40,1,481)
-for i in range(481):
-    x[:,0,i] = vector1[i]
-
-
-Wf = np.random.randn(40, 40+40) * 0.01
+a0 = np.random.randn(40,1)
+Wf = np.random.randn(40, 40+3)
 bf = np.random.randn(40,1)
-Wi = np.random.randn(40, 40+40) * 0.01
+Wi = np.random.randn(40, 40+3)
 bi = np.random.randn(40,1)
-Wo = np.random.randn(40, 40+40) * 0.01
+Wo = np.random.randn(40, 40+3)
 bo = np.random.randn(40,1)
-Wc = np.random.randn(40, 40+40) * 0.01
+Wc = np.random.randn(40, 40+3)
 bc = np.random.randn(40,1)
 Wy = np.random.randn(40,40)
 by = np.random.randn(40,1)
-da = np.random.randn(40, 1, 481)
-
+ 
 parameters = {"Wf": Wf, "Wi": Wi, "Wo": Wo, "Wc": Wc, "Wy": Wy, "bf": bf, "bi": bi, "bo": bo, "bc": bc, "by": by}
+ 
+a, y, c, caches = lstm_forward(x, a0, parameters)
 
 
-def learning(x, a0, parameters, times):
-    for i in range(times):
-        print(i)
-        a, y, c, caches = lstm_forward(x, a0, parameters)
-        gradients = lstm_backward(da, caches)
-        parameters["Wf"] = parameters["Wf"] - gradients["dWf"]*100000
-        parameters["bf"] = parameters["bf"] - gradients["dbf"]*100000
-        parameters["Wi"] = parameters["Wi"] - gradients["dWi"]*100000
-        parameters["bi"] = parameters["bi"] - gradients["dbi"]*100000
-        parameters["Wo"] = parameters["Wo"] - gradients["dWo"]*100000
-        parameters["bo"] = parameters["bo"] - gradients["dbo"]*100000
-    return a, y, c, caches
 
-a, y, c, caches = learning(x, a0, parameters, 1000)
-choosen_notes = vec.vector_to_note(y)
 
-s = stream.Stream()
-s.append(choosen_notes)
-# s.show()
+
+
+
+

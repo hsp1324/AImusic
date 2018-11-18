@@ -2,6 +2,8 @@ from music21 import *
 import numpy as np
 from fractions import Fraction
 from collections import Counter
+import copy
+from keras.preprocessing import sequence
 
 #c0 - b8
 #vector size = 1(rest) + 9(number of octave) + 12(number of names) + 16(number of possible durations) + 1(measure at) + 1(measure left)
@@ -251,11 +253,12 @@ Duration
 
 
 def vector_to_note(vector):	
+
 	choosen_notes = []
 	vector = vector.reshape(len(vector[0,:]), len(vector[0,0,:]))
-	length = vector.shape[-1]
+	length = vector.shape[0]
 	for i in range(length):
-		iter_vector = vector[:, i]
+		iter_vector = vector[i, :]
 		octave = iter_vector[1:10]
 		name = iter_vector[10:22]
 		duration = iter_vector[22:38]
@@ -272,6 +275,41 @@ def vector_to_note(vector):
 	return choosen_notes
 
 
+
+def output_to_one_hot(vector):
+	# vecctor shape should be (40, )
+	one_hot = np.zeros(40)
+	octave = vector[1:10]
+	name = vector[10:22]
+	duration = vector[22:38]
+	is_rest_name = np.append(np.array(vector[0]), vector[10:22])
+	if(is_rest_name.argmax() == 0):
+		one_hot[0] = 1
+		best_index = duration.argmax()
+		one_hot[22 + best_index] = 1;
+	else:
+		one_hot[1 + octave.argmax()] = 1
+		one_hot[10 + name.argmax()] = 1
+		one_hot[22 + duration.argmax()] = 1
+	return one_hot
+
+
+
+
+def make_output(vector):
+	# vector should shape in (sequence length, one_hot_vector length)
+	output = copy.deepcopy(vector)
+	output = output[1:, :]
+	return output
+
+
+def pad_sequences(vector, maxlen=None):
+	# vector should shape in (sequence length, one_hot_vector length)
+
+	trans_vector = np.transpose(vector)
+	pad_outcome = sequence.pad_sequences(trans_vector, maxlen=maxlen, padding='post')
+	outcome = np.transpose(pad_outcome) 
+	return outcome
 
 
 

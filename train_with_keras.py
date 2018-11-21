@@ -1,5 +1,6 @@
 from keras.layers import Dense, LSTM, Dropout, Activation, Input
 from keras.models import Model, Sequential
+from keras.optimizers import RMSprop
 import numpy as np
 import Vecterize as vec
 from music21 import *
@@ -65,29 +66,30 @@ model.add(Dense(256))
 model.add(Dropout(0.3))
 model.add(Dense(one_hot_length))
 model.add(Activation('softmax'))
-model.compile(loss = 'categorical_crossentropy', optimizer='rmsprop')
+optimizer = RMSprop(lr=0.005, rho=0.9, epsilon=None, decay=1e-5)
+model.compile(loss = 'categorical_crossentropy', optimizer=optimizer)
 model.fit(input_, output_, nb_epoch=10000, batch_size=2, verbose=2)
 
 
 
-first_note = summer_treble_input[0, 5]
-first_note = first_note.reshape(1, 1, 40)
+first_note = first_love_treble_input[0, 5]
+first_note = first_note.reshape(1, 1, one_hot_length)
 outcome = model.predict(first_note)
 predict_notes = vec.vector_to_note(outcome)
-predict_one_hots = vec.output_to_one_hot(outcome.reshape([40])).reshape([1,1,40])
+predict_one_hots = vec.output_to_one_hot(outcome.reshape([one_hot_length])).reshape([1,1,one_hot_length])
 
 
 
-for i in range(6, origin_length):
-	print(i, "/", origin_length)
+for i in range(1, 400):
+	print(i, "/", 400)
 	outcome = model.predict(predict_one_hots)
-	predict_note = vec.vector_to_note(outcome[0, -1].reshape(1,1,40))
+	predict_note = vec.vector_to_note(outcome[0, -1].reshape(1,1,one_hot_length))
 	predict_notes.extend(predict_note)
 	latest_outcomt = outcome[0, -1]
 	predict_one_hot = vec.output_to_one_hot(latest_outcomt)
-	predict_one_hots = np.append(predict_one_hots[0], predict_one_hot.reshape(1, 40), axis=0)
+	predict_one_hots = np.append(predict_one_hots[0], predict_one_hot.reshape(1, one_hot_length), axis=0)
 	len_so_far, no = predict_one_hots.shape
-	predict_one_hots = predict_one_hots.reshape(1, len_so_far, 40)
+	predict_one_hots = predict_one_hots.reshape(1, len_so_far, one_hot_length)
 
 
 

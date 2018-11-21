@@ -7,63 +7,70 @@ import tensorflow as tf
 from fractions import Fraction
 import copy
 
-maxlen = 500
+maxlen = 1000
+one_hot_length = 40
 
-
-summer = converter.parse("Summer_Joe_Hisaishi.mxl")
-part0 = summer.getElementsByClass('Part')[0]
-vector = vec.vectorize(part0)
-
-origin_length, one_hot_length = vector.shape
-
-
-output = vec.make_output(vector)
-
-vector = vec.pad_sequences(vector, maxlen=maxlen)
-output = vec.pad_sequences(output, maxlen=maxlen)
-
-seq_length, one_hot_length = vector.shape
-
-vector = vector.reshape(1, maxlen, one_hot_length)   #(number of training data, sequence length, one_hot_vector length)
-
-output = output.reshape(1, maxlen, one_hot_length) 
+summer = "Summer_Joe_Hisaishi.mxl"
+sparkle = "Sparkle.mxl"
+first_love = "First_Love.mxl"
+one_summers_day = "One_Summers_Day.mxl"
+river_flows_in_you = "River_Flows_In_You.mxl"
 
 
 
+summer_treble_input, summer_treble_output = vec.mxl_to_vector(summer, maxlen=maxlen, clef="treble")
+summer_bass_input, summer_bass_output = vec.mxl_to_vector(summer, maxlen=maxlen, clef="bass")
 
-### This is One way
+first_love_treble_input, first_love_treble_output = vec.mxl_to_vector(first_love, maxlen=maxlen, clef="treble")
+first_love_bass_input, first_love_bass_output = vec.mxl_to_vector(first_love, maxlen=maxlen, clef="bass")
+
+one_summers_day_treble_input, one_summers_day_treble_output = vec.mxl_to_vector(one_summers_day, maxlen=maxlen, clef="treble")
+one_summers_day_bass_input, one_summers_day_bass_output = vec.mxl_to_vector(one_summers_day, maxlen=maxlen, clef="bass")
+
+river_flows_in_you_treble_input, river_flows_in_you_treble_output = vec.mxl_to_vector(river_flows_in_you, maxlen=maxlen, clef="treble")
+river_flows_in_you_bass_input, river_flows_in_you_bass_output = vec.mxl_to_vector(river_flows_in_you, maxlen=maxlen, clef="bass")
+
+sparkle_treble_input, sparkle_treble_output = vec.mxl_to_vector(sparkle, maxlen=maxlen, clef="treble")
+sparkle_bass_input, sparkle_bass_output = vec.mxl_to_vector(sparkle, maxlen=maxlen, clef="bass")
+
+
+
+
+
+input_ = np.empty([5, maxlen, one_hot_length])
+output_ = np.empty([5, maxlen, one_hot_length])
+
+
+input_[0] = summer_treble_input[0]
+input_[1] = first_love_treble_input[0]
+input_[2] = one_summers_day_treble_input[0]
+input_[3] = river_flows_in_you_treble_input[0]
+input_[4] = sparkle_treble_input[0]
+
+output_[0] = summer_treble_output[0]
+output_[1] = first_love_treble_output[0]
+output_[2] = one_summers_day_treble_output[0]
+output_[3] = river_flows_in_you_treble_output[0]
+output_[4] = sparkle_treble_output[0]
+
+
 
 model = Sequential()
 model.add(LSTM(256, input_shape=(None, one_hot_length), return_sequences=True))
-model.add(Dropout(0.2))
+model.add(Dropout(0.3))
 model.add(LSTM(512, return_sequences=True))
-model.add(Dropout(0.2))
-model.add(LSTM(512, return_sequences=True))
-model.add(Dropout(0.1))
+model.add(Dropout(0.3))
+model.add(LSTM(256, return_sequences=True))
+model.add(Dense(256))
+model.add(Dropout(0.3))
 model.add(Dense(one_hot_length))
 model.add(Activation('softmax'))
-
 model.compile(loss = 'categorical_crossentropy', optimizer='rmsprop')
-
-model.fit(vector, output, nb_epoch=10000, batch_size=1, verbose=2)
-
+model.fit(input_, output_, nb_epoch=10000, batch_size=2, verbose=2)
 
 
-# model = Sequential()
-# model.add(LSTM(256, input_shape=(maxlen, one_hot_length), return_sequences=True))
-# model.add(Dropout(0.3))
-# model.add(LSTM(512, return_sequences=True))
-# model.add(Dropout(0.3))
-# model.add(LSTM(256))
-# model.add(Dense(256))
-# model.add(Dropout(0.3))
-# model.add(Dense(one_hot_length))
-# model.add(Activation('softmax'))
-# model.compile(loss = 'categorical_crossentropy', optimizer='rmsprop')
 
-# model.fit(vector, output, nb_epoch=100, batch_size=1, verbose=2)
-
-first_note = vector[0, 5]
+first_note = summer_treble_input[0, 5]
 first_note = first_note.reshape(1, 1, 40)
 outcome = model.predict(first_note)
 predict_notes = vec.vector_to_note(outcome)
@@ -84,14 +91,9 @@ for i in range(6, origin_length):
 
 
 
-
-s = stream.Stream()
-for i in predict_notes:
-	if i.duration.quarterLength not in [Fraction(1,10)]:
-		s.append(i)
-
+s = vec.notes_to_stream(predict_notes)
 s.show()
-### One way end
+
 
 
 
@@ -109,24 +111,3 @@ s.show()
 # decoder_dense = Dense(seq_length, activation='softmax')
 
 # model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
-
-
-
-
-
-
-
-# hidden_size = 500
-
-# num_of_notes = len(vector0)  # 481
-# hot_vec_len = len(vector0[0])
-
-# model = Sequential()
-# model.add(LSTM(hot_vec_len, return_sequences=True))
-# model.add(Dropout(0.2))
-# model.add(LSTM(hot_vec_len, return_sequences=False))
-# model.add(Dropout(0.2))
-# model.add(Dense(hot_vec_len))
-# model.add(Activation('softmax'))
-
-# model.compile(loss = 'categorical_crossentropy', optimizer='rmsprop')

@@ -313,3 +313,53 @@ def pad_sequences(vector, maxlen=None):
 
 
 
+def mxl_to_vector(mxl_file, maxlen=500, clef="treble"):
+	summer = converter.parse(mxl_file)
+	parts = []
+	part = None	
+
+	if clef == "treble":
+		part = summer.getElementsByClass('Part')[0]
+	elif clef == "bass":
+		part = summer.getElementsByClass('Part')[1]
+	else:
+		print("Clef is either treble or bass. Default is treble")
+		part = summer.getElementsByClass('Part')[0]
+
+
+	vector = vectorize(part)
+
+	origin_length, one_hot_length = vector.shape
+
+	print(mxl_file, " length:", origin_length)
+
+
+	output = make_output(vector)
+
+	vector = pad_sequences(vector, maxlen=maxlen)
+	output = pad_sequences(output, maxlen=maxlen)
+
+	seq_length, one_hot_length = vector.shape
+
+	vector = vector.reshape(1, maxlen, one_hot_length)   #(number of training data, sequence length, one_hot_vector length)
+
+	output = output.reshape(1, maxlen, one_hot_length) 
+
+	return vector, output
+
+
+
+def vector_to_stream(vector):
+	notes = vector_to_note(vector)
+	s = notes_to_stream(notes)
+	return s
+
+
+
+def notes_to_stream(notes):
+	s = stream.Stream()
+	for note in notes:
+		if note.duration.quarterLength not in [Fraction(1,10)]:
+			s.append(note)
+	return s
+

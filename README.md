@@ -4,10 +4,7 @@ create AI composer
 
 pip install pydub
 
-
-install PySynth
-
-in Home-page: http://mdoege.github.io/PySynth/
+need music21  from free mit tool
 
 How to run it?
 

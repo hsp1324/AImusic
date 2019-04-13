@@ -1,3 +1,5 @@
+# $ source activate tensorflow  // in Mac
+
 from keras.layers import Dense, LSTM, Dropout, Activation, Input, merge
 from keras.models import Model, Sequential, load_model
 from keras.optimizers import RMSprop
@@ -14,7 +16,7 @@ from keras.utils import multi_gpu_model
 maxlen = 1000
 bundle_size = 16
 onehot_size = vec.onehot_size
-slide_size = 4
+slide_size = 8
 score_dir = 'score'
 scores = listdir(score_dir)
 num_of_scores = len(scores)
@@ -45,7 +47,11 @@ for score_name in scores:
   #   continue
   # if sum_input_size == 1:
   #   break
-  print(score_name)
+  print("Score Name: ", score_name)
+  if score_name[-4:] != '.mxl':
+    print("Invalid Score")
+    print()
+    continue
   # file_name = "score/First_Love.mxl"
   file_name = score_dir + '/' + score_name
   treble_input, treble_output = vec.mxl_to_vector(file_name, measure_size=1, bundle_size=bundle_size, slide_size=slide_size, maxlen=maxlen, clef="treble")
@@ -80,7 +86,7 @@ optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)
 # treble_model = multi_gpu_model(treble_model, gpus=4)
 
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-model.fit(input_, output_, nb_epoch=100000, batch_size=num_of_scores, verbose=2)
+model.fit(input_, output_, nb_epoch=1000, batch_size=num_of_scores, verbose=2)
 
 
 

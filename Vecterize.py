@@ -306,6 +306,7 @@ def pad_sequences(vector, maxlen=600):
 def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, maxlen=max_notes, clef="treble"):
 	first_love = converter.parse(mxl_file)
 	part = first_love.chordify()   # Merge treble and bass
+	# part = remove_tie_part(part_chordify)
 	# if clef == "treble":
 	# 	part = first_love.getElementsByClass('Part')[0]
 	# elif clef == "bass":
@@ -585,6 +586,34 @@ def combine_consecutive_note(s):
 	new_stream = stream.Stream(new_notes)
 	return new_stream
 
+
+
+
+def remove_tie_part(part):
+	measures = part.getElementsByClass('Measure')
+	for measure_ in measures:
+		chords = measure_.getElementsByClass('Chord')
+		for chord_ in chords:
+			remove_tie_chord(chord_)
+	return part
+
+
+
+# remove tied note that was chordify()
+''' I think I need to consider the case where the tie is not created by chordify().
+	Such as a note supposed to be full length and it is full length by two 2 quarter length
+'''
+def remove_tie_chord(chord_):
+	note_index_to_be_remove = []
+	for i in range(len(chord_)):
+		note_ = chord_[i]
+		if note_.tie in [tie.Tie('stop'), tie.Tie('continue')]:
+			note_index_to_be_remove.append(i)
+		elif note_.tie == tie.Tie('start'):
+			note_.tie = None
+	while len(note_index_to_be_remove) != 0:
+		index = note_index_to_be_remove.pop()
+		chord_.remove(chord_[index])
 
 
 

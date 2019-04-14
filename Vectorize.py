@@ -267,9 +267,28 @@ def choose_duration(duration_vector):
 def output_to_one_hot(vector):
 	# vecctor shape should be (38, )
 	one_hot = np.zeros(onehot_size)
-	octave = vector[1:10]
-	name = vector[10:22]
-	duration = vector[22:22+len(possible_duration)]
+	number_of_key_pressed_vector = vector[:11]
+	note_vector = vector[11 : duration_pos_in_vector]
+	duration_vector = vector[duration_pos_in_vector : duration_pos_in_vector + len(possible_duration)]
+
+	duration_index = duration_vector.argmax()
+	one_hot[duration_pos_in_vector + duration_index] = 1
+
+
+	sum_value = name_vector.sum()
+	name_prob = name_vector / sum_value  # Normalize
+	choosen_values = np.random.choice(name_vector, number_of_note_pressed, replace=False, p=name_prob)
+	choosen_notes = []
+	for choosen_value in choosen_values:
+		choosen_index = np.where(name_vector == choosen_value)[0][0]
+		name_vector[choosen_index] = 0.0   # Make it 0.0 that is choosen for deleting same probabilty
+		choosen_octave = int(choosen_index / number_of_names)
+		choosen_name_index = choosen_index % number_of_names
+		choosen_name = name_dic[choosen_name_index]
+		choosen_note = choosen_name + str(choosen_octave)
+		choosen_notes.append(choosen_note)
+
+
 	is_rest_name = np.append(np.array(vector[0]), vector[10:22])
 	if(is_rest_name.argmax() == 0):
 		one_hot[0] = 1
@@ -496,11 +515,13 @@ def generate_music(model, bundle_size=10, total_length=400):
 	for i in range(1, 400):
 		print(i, "/", 400)
 		outcome = model.predict(predict_one_hots)
-		latest_outcomt = outcome[0, -1]
-		predict_note = vector_to_note(latest_outcomt.reshape(1, 1, onehot_size))
+		latest_outcome = outcome[0, -1]
+		predict_note = vector_to_note(latest_outcome.reshape(1, 1, onehot_size))
 		predict_notes.extend(predict_note)
-		predict_one_hot = output_to_one_hot(latest_outcomt)
-		if(len(predict_one_hots[0]) < 10):
+		predict_one_hot = note_to_vector(predict_note)
+		# predict_one_hot = output_to_one_hot(latest_outcome)
+		# slide window  keep accumulate predict_one_hot until the bundle size. Then keep the bundle size
+		if(len(predict_one_hots[0]) < bundle_size):
 			predict_one_hots = np.append(predict_one_hots[0], predict_one_hot.reshape(1, onehot_size), axis=0)
 			len_so_far, no = predict_one_hots.shape
 			predict_one_hots = predict_one_hots.reshape(1, len_so_far, onehot_size)

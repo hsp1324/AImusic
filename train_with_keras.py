@@ -17,9 +17,9 @@ from keras.utils import multi_gpu_model
 
 
 maxlen = 1000
-bundle_size = 32
+bundle_size = 16
 onehot_size = vec.onehot_size
-slide_size = 4
+slide_size = 3
 score_dir = 'score'
 scores = listdir(score_dir)
 num_of_scores = len(scores)

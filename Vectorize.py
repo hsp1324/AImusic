@@ -449,6 +449,9 @@ def all_vectorize(part, scale_int=0):
 
 # Convert note or chord to one_hot vector
 def note_to_vector(iter_note):
+	onehot_vector = np.zeros(onehot_size)
+	duration_index = transform_duration_to_number(iter_note.duration.quarterLength)
+	onehot_vector[duration_pos_in_vector + duration_index] = 1
 	if type(iter_note) is music21.note.Note:
 		is_chord = False
 	elif type(iter_note) is music21.chord.Chord:
@@ -456,9 +459,8 @@ def note_to_vector(iter_note):
 	else:
 		is_chord = False
 		print("WARNING!!! iter_note is", type(iter_note))
-	onehot_vector = np.zeros(onehot_size)
-	duration_index = transform_duration_to_number(iter_note.duration.quarterLength)
-	onehot_vector[duration_pos_in_vector + duration_index] = 1
+		onehot_vector[0] = 1
+		return onehot_vector
 	if is_chord:
 		number_of_key_pressed = len(iter_note)
 	else:

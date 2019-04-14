@@ -1,4 +1,4 @@
-from music21 import *
+import music21
 import numpy as np
 from fractions import Fraction
 from collections import Counter
@@ -8,7 +8,7 @@ from keras.models import load_model
 import os.path
 
 #c0 - b8
-#onehot_size: 1(rest) + 10(number of note pressed) + 9(number of octave) + 12(number of names) + 16(number of possible durations) Not using{+ 1(measure at) + 1(measure left)}
+#onehot_size: 1(rest) + 10(number of note pressed) + ( 9(number of octave) * 12(number of names) ) + 16(number of possible durations) Not using{+ 1(measure at) + 1(measure left)}
 
 
 # score.flat     # naive flat
@@ -37,7 +37,7 @@ sharps_to_diatonic_dic = {-1: -5, -2: 2, -3: -3, -4: 4, -5: -1, -6: -6,
 													0: 0, 1: 5, 2: -2, 3: 3, 4: -4, 5: 1}
 
 
-# onehot_size = 1 + 9 + 12 + 1 + 1 + 1
+
 # measure_at_index = 1 + 12*9
 MAX_NUM_NOTES = 25   # Max number of notes per Measure
 sequence_length = 0
@@ -130,7 +130,7 @@ def transform_duration_to_number(duration):
 
 
 
-
+# Count all notes including notes, rests, chords
 def count_notes(part):
 	note_cnt = 0
 	rest_cnt = 0
@@ -141,13 +141,13 @@ def count_notes(part):
 	for measure in measures:
 		measure_cnt += 1
 		for item in measure:
-			if type(item) is note.Note:
+			if type(item) is music21.note.Note:
 				note_cnt += 1
 				duration_cnt += item.duration.quarterLength
-			elif type(item) is note.Rest:
+			elif type(item) is music21.note.Rest:
 				rest_cnt += 1
 				duration_cnt += item.duration.quarterLength
-			elif type(item) is chord.Chord:
+			elif type(item) is music21.chord.Chord:
 				chord_cnt += 1
 				duration_cnt += item.duration.quarterLength
 			duration_cnt = round(duration_cnt, 6)
@@ -194,7 +194,7 @@ Duration
 """
 
 
-
+# input vector shape suppose to be (1, num_of_notes, one_hot_size)
 def vector_to_note(vector):	
 	stream_notes = []
 	vector = vector.reshape(len(vector[0,:]), len(vector[0,0,:]))
@@ -205,20 +205,20 @@ def vector_to_note(vector):
 		name_vector = iter_vector[note_pos_in_vector : note_pos_in_vector + (number_of_octave * number_of_names)]
 		duration_vector = iter_vector[duration_pos_in_vector : duration_pos_in_vector + len(possible_duration)]
 		is_rest_name = np.append(np.array(iter_vector[0]), iter_vector[note_pos_in_vector : note_pos_in_vector + (number_of_octave * number_of_names)])
-		if(is_rest_name.argmax() == 0):  # is_rest_name is the probability of rest and every possible note. If the rest probability is the highest than rest.
-			max_val = max(duration)
+		if(number_of_note_pressed == 0):
+			max_val = max(duration_vector)
 			if(max_val == 0):
 				choosen_duration = 0.5
 			else:
 				choosen_duration = possible_duration[duration_vector.argmax()]
-			next_note = note.Rest(quarterLength = choosen_duration)
+			next_note = music21.note.Rest(quarterLength = choosen_duration)
 		else:
 			choosen_notes = choose_note(name_vector, number_of_note_pressed)
 			choosen_duration = choose_duration(duration_vector)
 			if number_of_note_pressed == 1:
-				next_note = note.Note(choosen_notes[0], quarterLength = choosen_duration)
+				next_note = music21.note.Note(choosen_notes[0], quarterLength = choosen_duration)
 			else:
-				next_note = chord.Chord(choosen_notes, quarterLength = choosen_duration)
+				next_note = music21.chord.Chord(choosen_notes, quarterLength = choosen_duration)
 		print("next_note:", next_note)
 		stream_notes.append(next_note)
 	return stream_notes
@@ -227,19 +227,21 @@ def vector_to_note(vector):
 
 def get_number_of_key_pressed(iter_vector):
 	number_of_note_pressed_vector = iter_vector[0 : 1 + possible_number_of_note_pressed]
+	print(number_of_note_pressed_vector)
 	number_of_note_pressed = number_of_note_pressed_vector.argmax()
 	return number_of_note_pressed
 
 
 
 
-def choose_note(name_vector, number_of_notes):
+def choose_note(name_vector, number_of_note_pressed):
 	sum_value = name_vector.sum()
-	name_prob = name_vector / sum_value
-	choosen_values = np.random.choice(name_vector, number_of_notes, replace=False, p=name_prob)
+	name_prob = name_vector / sum_value  # Normalize
+	choosen_values = np.random.choice(name_vector, number_of_note_pressed, replace=False, p=name_prob)
 	choosen_notes = []
 	for choosen_value in choosen_values:
 		choosen_index = np.where(name_vector == choosen_value)[0][0]
+		name_vector[choosen_index] = 0.0   # Make it 0.0 that is choosen for deleting same probabilty
 		choosen_octave = int(choosen_index / number_of_names)
 		choosen_name_index = choosen_index % number_of_names
 		choosen_name = name_dic[choosen_name_index]
@@ -304,9 +306,10 @@ def pad_sequences(vector, maxlen=600):
 
 
 def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, maxlen=max_notes, clef="treble"):
-	first_love = converter.parse(mxl_file)
-	part = first_love.chordify()   # Merge treble and bass
-	# part = remove_tie_part(part_chordify)
+	first_love = music21.converter.parse(mxl_file)
+	part_chordify = first_love.chordify()   # Merge treble and bass
+	key_ = get_key(part_chordify)
+	part = remove_tie_part(part_chordify)
 	# if clef == "treble":
 	# 	part = first_love.getElementsByClass('Part')[0]
 	# elif clef == "bass":
@@ -314,7 +317,6 @@ def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, maxlen
 	# else:
 	# 	print("Clef is either treble or bass. Default is treble")
 	# 	part = first_love.getElementsByClass('Part')[0]
-	key_ = get_key(part)
 	# vector = all_vectorize(part, measure_size, key_.sharps)   # Slide window by measure
 	vector, output = slide_window(part, bundle_size=bundle_size, slide_size=slide_size, scale_int=key_.sharps)  # Slide window by notes
 	sample_size = int(np.ceil((max_notes - bundle_size + 1) / slide_size))
@@ -338,7 +340,7 @@ def vector_to_stream(vector):
 
 
 def notes_to_stream(notes):
-	s = stream.Stream()
+	s = music21.stream.Stream()
 	for note in notes:
 		if note.duration.quarterLength not in [Fraction(1,10)]:
 			s.append(note)
@@ -371,7 +373,15 @@ def get_key(part):
 			continue
 
 
-
+def test_transform_to_diatonic():
+	river = music21.converter.parse('score/River_Flows_In_You.mxl')
+	river_chordify = river.chordify()   # Merge treble and bass
+	key_ = get_key(river_chordify)
+	untied_river = remove_tie_part(river_chordify)
+	vectorized_diatonic_part = all_vectorize(untied_river, scale_int=key_.sharps)
+	reshaped = vectorized_diatonic_part.reshape(1, vectorized_diatonic_part.shape[0], vectorized_diatonic_part.shape[1])
+	diatonic_stream = vector_to_stream(reshaped)
+	return diatonic_stream
 
 
 
@@ -391,21 +401,21 @@ def all_vectorize(part, scale_int=0):
 		measure_index += 1
 		measure_accum_duration = 0
 		for iter_item in measure:
-			if type(iter_item) not in [note.Note, note.Rest, chord.Chord]:
+			if type(iter_item) not in [music21.note.Note, music21.note.Rest, music21.chord.Chord]:
 				continue
 			elif nth_index >= max_notes-1:
 				return vector[:nth_index]
-			iter_vector = vector[nth_index]
+			iter_vector = vector[nth_index]  # Make pointer to vector to be returned
 			# vector[0][nth_index][0] = 1  # Show that it is not rest
 			iter_note = None
-			if type(iter_item) is note.Note:
-				iter_note = iter_item.transpose(steps_to_move)
+			if type(iter_item) is music21.note.Note:
+				iter_note = iter_item.transpose(steps_to_move)   # change note to diatonic mode(C major)
 				vector[nth_index] = note_to_vector(iter_note, is_chord=False)
-			elif type(iter_item) is chord.Chord:
-				# iter_notes = iter_item.transpose(steps_to_move)   # chord
-				iter_note = iter_item[-1].transpose(steps_to_move)  # get the hightst picth in the chord for now. We will get all notes in chord in the future
-				vector[nth_index] = note_to_vector(iter_note, is_chord=False)
-			elif type(iter_item) is note.Rest:
+			elif type(iter_item) is music21.chord.Chord:
+				iter_notes = iter_item.transpose(steps_to_move)   # chord
+				# iter_note = iter_item[-1].transpose(steps_to_move)  # get the hightst picth in the chord for now. We will get all notes in chord in the future
+				vector[nth_index] = note_to_vector(iter_notes, is_chord=True)
+			elif type(iter_item) is music21.note.Rest:
 				iter_vector[0] = 1
 				iter_duration = iter_item.duration.quarterLength
 				duration_index = transform_duration_to_number(iter_duration)
@@ -419,7 +429,7 @@ def all_vectorize(part, scale_int=0):
 
 
 
-
+# Convert note or chord to one_hot vector
 def note_to_vector(iter_note, is_chord=False):
 	onehot_vector = np.zeros(onehot_size)
 	duration_index = transform_duration_to_number(iter_note.duration.quarterLength)
@@ -437,7 +447,7 @@ def note_to_vector(iter_note, is_chord=False):
 		if(name_number < 0):  # Case of Cb
 			if(octave != 0):
 				octave -= 1
-				name_number = 12 + name_number
+				name_number = 12 + name_number  # Convert Cb to B
 			else:
 				print("Invalid Note. Consider it as a Rest")
 				onehot_vector[0] = 1  
@@ -480,7 +490,7 @@ def generate_music(model, bundle_size=10, total_length=400):
 	first_note_name =  name_dic[np.random.choice(len(name_dic))]
 	first_note_duration = np.random.choice([0.25, 0.5, 1.0, 2.0, 4.0])
 	first_note_octave = np.random.choice(['4', '5'])
-	first_note = note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
+	first_note = music21.note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
 	predict_one_hots = note_to_vector(first_note).reshape(1, 1, onehot_size)
 	predict_notes = [first_note]
 	for i in range(1, 400):
@@ -528,16 +538,16 @@ def set_slur(s):
 	prev_offset = prev.offset
 	for cur in s[1:]:
 		cur_offset = cur.offset
-		if type(prev) is note.Note:
+		if type(prev) is music21.note.Note:
 			prev_note = prev
-		elif type(prev) is chord.Chord:
+		elif type(prev) is music21.chord.Chord:
 			prev_note = prev.sortDiatonicAscending()[0]
 		else:
 			prev = cur
 			continue
-		if type(cur) is note.Note:
+		if type(cur) is music21.note.Note:
 			cur_note = cur
-		elif type(prev) is chord.Chord:
+		elif type(prev) is music21.chord.Chord:
 			cur_note = cur.sortDiatonicAscending()[0]
 		else:
 			continue
@@ -557,33 +567,33 @@ def combine_consecutive_note(s):
 	accum_quarter_length = prev.quarterLength
 	for cur in s[1:]:
 		cur_offset = cur.offset
-		if type(prev) is note.Note:
+		if type(prev) is music21.note.Note:
 			prev_note = prev
-		elif type(prev) is chord.Chord:
+		elif type(prev) is music21.chord.Chord:
 			prev_note = prev.sortDiatonicAscending()[0]
-		elif type(prev) is note.Rest:
+		elif type(prev) is music21.note.Rest:
 			prev = cur
 			continue
 		else:
 			prev = cur
 			continue
-		if type(cur) is note.Note:
+		if type(cur) is music21.note.Note:
 			cur_note = cur
-		elif type(cur) is chord.Chord:
+		elif type(cur) is music21.chord.Chord:
 			cur_note = cur.sortDiatonicAscending()[0]
-		elif type(cur) is note.Rest:
-			new_notes.append(note.Note(prev_note), quarterLength=accum_quarter_length)
+		elif type(cur) is music21.note.Rest:
+			new_notes.append(music21.note.Note(prev_note), quarterLength=accum_quarter_length)
 			new_notes.append(cur)
 			prev = cur
 			continue    # It might need to be prev = cur
 		if prev_note == cur_note:
 			accum_quarter_length += cur.quarterLength
 		else:
-			new_notes.append(note.Note(prev_note), quarterLength=accum_quarter_length)
+			new_notes.append(music21.note.Note(prev_note), quarterLength=accum_quarter_length)
 			prev = cur
 			accum_quarter_length = cur.quarterLength
 			prev_offset = cur_offset
-	new_stream = stream.Stream(new_notes)
+	new_stream = music21.stream.Stream(new_notes)
 	return new_stream
 
 
@@ -607,9 +617,9 @@ def remove_tie_chord(chord_):
 	note_index_to_be_remove = []
 	for i in range(len(chord_)):
 		note_ = chord_[i]
-		if note_.tie in [tie.Tie('stop'), tie.Tie('continue')]:
+		if note_.tie in [music21.tie.Tie('stop'), music21.tie.Tie('continue')]:
 			note_index_to_be_remove.append(i)
-		elif note_.tie == tie.Tie('start'):
+		elif note_.tie == music21.tie.Tie('start'):
 			note_.tie = None
 	while len(note_index_to_be_remove) != 0:
 		index = note_index_to_be_remove.pop()
@@ -622,10 +632,10 @@ def divide_treb_bass(s):
 	treble = []
 	bass = []
 	for i in s:
-		if type(i) is note.Note:
+		if type(i) is music21.note.Note:
 			treble.append(i)
-			bass.append(note.Rest(quarterLength = i.quarterLength))
-		elif type(i) is chord.Chord:
+			bass.append(music21.note.Rest(quarterLength = i.quarterLength))
+		elif type(i) is music21.chord.Chord:
 			bass_note = i.sortDiatonicAscending()[0]
 			bass_note.offset = i.offset
 			bass.append(bass_note)
@@ -633,9 +643,9 @@ def divide_treb_bass(s):
 			treble.append(i)
 		else:
 			continue
-	treb_st = stream.Stream(treble)
-	bass_st = stream.Stream(bass)
-	main_st = stream.Stream()
+	treb_st = music21.stream.Stream(treble)
+	bass_st = music21.stream.Stream(bass)
+	main_st = music21.stream.Stream()
 	main_st.insert(treb_st)
 	main_st.insert(bass_st)
 	return main_st

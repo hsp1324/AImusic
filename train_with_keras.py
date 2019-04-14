@@ -4,7 +4,7 @@ from keras.layers import Dense, LSTM, Dropout, Activation, Input, merge
 from keras.models import Model, Sequential, load_model
 from keras.optimizers import RMSprop
 import numpy as np
-import Vecterize as vec
+import Vectorize as vec
 from music21 import *
 import tensorflow as tf
 from fractions import Fraction
@@ -14,16 +14,16 @@ from keras.utils import multi_gpu_model
 
 
 maxlen = 1000
-bundle_size = 16
+bundle_size = 32
 onehot_size = vec.onehot_size
-slide_size = 8
+slide_size = 4
 score_dir = 'score'
 scores = listdir(score_dir)
 num_of_scores = len(scores)
 # sparkle = "score/Sparkle.mxl"
 # first_love = "score/First_Love.mxl"
 # one_summers_day = "score/One_Summers_Day.mxl"
-# river_flows_in_you = "score/River_Flows_In_You.mxl"
+# river = "score/River_Flows_In_You.mxl"
 
 
 # summer = "score/Summer_Joe_Hisaishi.mxl"
@@ -70,16 +70,16 @@ print("input_.shape: ", input_.shape)
 
 model = Sequential()
 model.add(LSTM(256, input_shape=(None, onehot_size), return_sequences=True))
-model.add(Dropout(0.3))
+model.add(Dropout(0.1))
 model.add(Dense(256))
-model.add(Dropout(0.3))
+model.add(Dropout(0.1))
 model.add(LSTM(512, return_sequences=True))
-model.add(Dropout(0.3))
+model.add(Dropout(0.1))
 model.add(Dense(256))
-model.add(Dropout(0.3))
+model.add(Dropout(0.1))
 model.add(LSTM(512, return_sequences=True))
 model.add(Dense(256))
-model.add(Dropout(0.3))
+model.add(Dropout(0.1))
 model.add(Dense(onehot_size))
 model.add(Activation('softmax'))
 optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)

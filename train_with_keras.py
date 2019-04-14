@@ -1,4 +1,7 @@
 # $ source activate tensorflow  // in Mac
+# copy All and paste in python3.6 instead execute python3 train_with_keras,
+# becasue you want to generate music in the middle of training and retrain without losing data
+
 
 from keras.layers import Dense, LSTM, Dropout, Activation, Input, merge
 from keras.models import Model, Sequential, load_model

@@ -429,11 +429,11 @@ def all_vectorize(part, scale_int=0):
 			iter_note = None
 			if type(iter_item) is music21.note.Note:
 				iter_note = iter_item.transpose(steps_to_move)   # change note to diatonic mode(C major)
-				vector[nth_index] = note_to_vector(iter_note, is_chord=False)
+				vector[nth_index] = note_to_vector(iter_note)
 			elif type(iter_item) is music21.chord.Chord:
 				iter_notes = iter_item.transpose(steps_to_move)   # chord
 				# iter_note = iter_item[-1].transpose(steps_to_move)  # get the hightst picth in the chord for now. We will get all notes in chord in the future
-				vector[nth_index] = note_to_vector(iter_notes, is_chord=True)
+				vector[nth_index] = note_to_vector(iter_notes)
 			elif type(iter_item) is music21.note.Rest:
 				iter_vector[0] = 1
 				iter_duration = iter_item.duration.quarterLength
@@ -449,7 +449,13 @@ def all_vectorize(part, scale_int=0):
 
 
 # Convert note or chord to one_hot vector
-def note_to_vector(iter_note, is_chord=False):
+def note_to_vector(iter_note):
+	if type(iter_note) is music21.note.Note:
+		is_chord = False
+	elif type(iter_note) is music21.chord.Chord:
+		is_chord = True
+	else:
+		print("WARNING!!! iter_note is", type(iter_note))
 	onehot_vector = np.zeros(onehot_size)
 	duration_index = transform_duration_to_number(iter_note.duration.quarterLength)
 	onehot_vector[duration_pos_in_vector + duration_index] = 1

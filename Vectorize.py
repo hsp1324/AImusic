@@ -518,7 +518,7 @@ def generate_music(model, bundle_size=10, total_length=400):
 		latest_outcome = outcome[0, -1]
 		predict_note = vector_to_note(latest_outcome.reshape(1, 1, onehot_size))
 		predict_notes.extend(predict_note)
-		predict_one_hot = note_to_vector(predict_note)
+		predict_one_hot = note_to_vector(predict_note[0])
 		# predict_one_hot = output_to_one_hot(latest_outcome)
 		# slide window  keep accumulate predict_one_hot until the bundle size. Then keep the bundle size
 		if(len(predict_one_hots[0]) < bundle_size):

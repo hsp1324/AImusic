@@ -227,7 +227,6 @@ def vector_to_note(vector):
 
 def get_number_of_key_pressed(iter_vector):
 	number_of_note_pressed_vector = iter_vector[0 : 1 + possible_number_of_note_pressed]
-	print(number_of_note_pressed_vector)
 	number_of_note_pressed = number_of_note_pressed_vector.argmax()
 	return number_of_note_pressed
 
@@ -455,6 +454,7 @@ def note_to_vector(iter_note):
 	elif type(iter_note) is music21.chord.Chord:
 		is_chord = True
 	else:
+		is_chord = False
 		print("WARNING!!! iter_note is", type(iter_note))
 	onehot_vector = np.zeros(onehot_size)
 	duration_index = transform_duration_to_number(iter_note.duration.quarterLength)

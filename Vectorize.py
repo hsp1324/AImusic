@@ -19,16 +19,9 @@ import os.path
 
 
 
-""" 
-Duration
-1/12, 0.0625, 0.125, 0.1875, 0.375, 0.625, 0.875,
-1/6,  0.25, 1/3, 0.5, 2/3,  0.75, 5/6,  1, 7/6, 1.25, 4/3,  1.5, 5/3,  1.75, 11/6, 2,
-13/6, 2.25, 7/3, 2.5, 8/3, 2.75, 17/6, 3, 19/6, 3.25, 10/3, 3.5, 11/3, 3.75, 23/6, 4, 6
-"""
 
-
-possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,6), Fraction(1,5), 0.25, 
-										Fraction(1,3), 0.375,	0.5, Fraction(2,3), Fraction(1,6), 0.75, 0.875, 1.0, 1.5, 1.75, 2.0, 3.0, 3.5, 4.0, 6.0]
+possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,7), Fraction(1,6), Fraction(1,5), 0.25, Fraction(1,3),
+					0.375, 0.5, Fraction(2,3), 0.625, 0.75, 0.875, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0]
 
 name_dic = {0:'C', 1:'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F', 6: 'F#', 7: 'G',
 				8: 'G#', 9: 'A', 10: 'A#', 11: 'B'}
@@ -48,7 +41,6 @@ number_of_possible_duration = len(possible_duration)
 onehot_size = 1 + possible_number_of_note_pressed + (number_of_octave * number_of_names) + number_of_possible_duration
 note_pos_in_vector = 1 + possible_number_of_note_pressed
 duration_pos_in_vector = note_pos_in_vector + (number_of_octave * number_of_names)
-max_notes = 800
 
 duration_dic = {}
 for i in range(len(possible_duration)):
@@ -323,7 +315,7 @@ def pad_sequences(vector, maxlen=600):
 
 
 
-def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, maxlen=max_notes, clef="treble"):
+def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, clef="treble"):
 	first_love = music21.converter.parse(mxl_file)
 	part_chordify = first_love.chordify()   # Merge treble and bass
 	key_ = get_key(part_chordify)
@@ -337,15 +329,9 @@ def mxl_to_vector(mxl_file, measure_size=2, bundle_size=20, slide_size=2, maxlen
 	# 	part = first_love.getElementsByClass('Part')[0]
 	# vector = all_vectorize(part, measure_size, key_.sharps)   # Slide window by measure
 	vector, output = slide_window(part, bundle_size=bundle_size, slide_size=slide_size, scale_int=key_.sharps)  # Slide window by notes
-	sample_size = int(np.ceil((max_notes - bundle_size + 1) / slide_size))
-	vector = vector[:sample_size]
-	output = output[:sample_size]
-	# output = make_output(vector)
-	# vector = pad_sequences(vector, maxlen=maxlen)
-	# output = pad_sequences(output, maxlen=maxlen)
-	# seq_length, one_hot_length = vector.shape
-	# vector = vector.reshape(1, maxlen, one_hot_length)   #(number of training data, sequence length, one_hot_vector length)
-	# output = output.reshape(1, maxlen, one_hot_length) 
+	# sample_size = int(np.ceil((max_notes - bundle_size + 1) / slide_size))
+	# vector = vector[:sample_size]
+	# output = output[:sample_size]
 	return vector, output
 
 
@@ -410,7 +396,7 @@ def all_vectorize(part, scale_int=0):
 	total_num_measures = len(measures)
 	num_all_notes = count_notes(part)
 	print("num_all_notes:", num_all_notes)
-	vector = np.zeros([max_notes, onehot_size]) 
+	vector = np.zeros([num_all_notes, onehot_size]) 
 	total_accum_duration = 0
 	nth_index = 0
 	measure_index = 0
@@ -421,8 +407,6 @@ def all_vectorize(part, scale_int=0):
 		for iter_item in measure:
 			if type(iter_item) not in [music21.note.Note, music21.note.Rest, music21.chord.Chord]:
 				continue
-			elif nth_index >= max_notes-1:
-				return vector[:nth_index]
 			iter_vector = vector[nth_index]  # Make pointer to vector to be returned
 			# vector[0][nth_index][0] = 1  # Show that it is not rest
 			iter_note = None
@@ -495,15 +479,12 @@ def slide_window(part, bundle_size=10, slide_size=2, scale_int=0):
 	sample_size = int(np.ceil((len(vector) - bundle_size + 1) / slide_size))
 	input_ = np.empty(shape=[0, bundle_size, onehot_size])
 	output_ = np.empty(shape=[0, bundle_size, onehot_size])
-	input_vector = np.empty(shape=(sample_size, bundle_size, onehot_size))
-	output_vector = np.empty(shape=(sample_size, bundle_size, onehot_size))
-	index = 0
+	# ex) vector  = [1, 2, 3, 4, 5, 6]
+	#     input_  = [1, 2, 3, 4, 5]
+	#     output_ = [2, 3, 4, 5, 6]
 	for i in range(0, sample_size - slide_size, slide_size):
 		input_ = np.append(input_, copy.deepcopy(vector[i : i + bundle_size, : ]).reshape([1, bundle_size, onehot_size]), axis=0)
 		output_ = np.append(output_, copy.deepcopy(vector[i + 1 : i + bundle_size + 1, : ]).reshape([1, bundle_size, onehot_size]), axis=0)
-		input_vector[index] = copy.deepcopy(vector[i : i + bundle_size, : ])
-		output_vector[index] = copy.deepcopy(vector[i + 1 : i + bundle_size + 1, : ])
-		index += 1
 	return input_, output_
 
 
@@ -520,8 +501,8 @@ def generate_music(model, bundle_size=10, total_length=400):
 	first_note = music21.note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
 	predict_one_hots = note_to_vector(first_note).reshape(1, 1, onehot_size)
 	predict_notes = [first_note]
-	for i in range(1, 400):
-		print(i, "/", 400)
+	for i in range(1, total_length):
+		print(i, "/", total_length)
 		outcome = model.predict(predict_one_hots)
 		latest_outcome = outcome[0, -1]
 		predict_note = vector_to_note(latest_outcome.reshape(1, 1, onehot_size))
@@ -653,6 +634,7 @@ def remove_tie_chord(chord_):
 	while len(note_index_to_be_remove) != 0:
 		index = note_index_to_be_remove.pop()
 		chord_.remove(chord_[index])
+
 
 
 

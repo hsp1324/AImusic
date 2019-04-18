@@ -20,8 +20,9 @@ import os.path
 
 
 
-possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,7), Fraction(1,6), Fraction(1,5), 0.25, Fraction(1,3),
-					0.375, 0.5, Fraction(2,3), 0.625, 0.75, 0.875, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0]
+possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,7), Fraction(1,6), Fraction(1,5), 
+					0.25, Fraction(2,7), Fraction(1,3), 0.375, 0.5, Fraction(2,3), 0.625, 0.75, 0.875, 1.0, 1.25,
+					1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0]
 
 name_dic = {0:'C', 1:'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F', 6: 'F#', 7: 'G',
 				8: 'G#', 9: 'A', 10: 'A#', 11: 'B'}

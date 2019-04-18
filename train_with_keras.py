@@ -55,7 +55,7 @@ for score_name in scores:
   #   continue
   # if sum_input_size == 1:
   #   break
-  print("Score Name: ", score_name)
+  print(sum_input_size, "/", len(scores), "Score Name: ", score_name)
   if score_name[-4:] != '.mxl':
     print("Invalid Score")
     print()
@@ -107,14 +107,16 @@ s.show()
 
 
 def test_score():
+  index = 0
   for score_name in scores:
     file_name = score_dir + '/' + score_name
-    print("Score Name: ", score_name)
+    print(index, "/", len(scores), "Score Name: ", score_name)
     if score_name[-4:] != '.mxl':
       print("Invalid Score")
       print()
       continue
     check_song = music21.converter.parse(file_name)
+    index += 1
     print()
 
 

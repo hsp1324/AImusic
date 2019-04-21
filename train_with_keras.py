@@ -45,7 +45,7 @@ print("num_of_scores: ", num_of_scores)
 input_ = np.empty(shape=[0, bundle_size, vec.onehot_size])
 output_ = np.empty(shape=[0, bundle_size, vec.onehot_size])
 
-sum_input_size = 0
+index = 0
 
 
 
@@ -55,10 +55,11 @@ for score_name in scores:
   #   continue
   # if sum_input_size == 1:
   #   break
-  print(sum_input_size, "/", len(scores), "Score Name: ", score_name)
+  print(index, "/", len(scores), "  ", score_name)
   if score_name[-4:] != '.mxl':
     print("Invalid Score")
     print()
+    index += 1
     continue
   # file_name = "score/First_Love.mxl"
   file_name = score_dir + '/' + score_name
@@ -71,7 +72,7 @@ for score_name in scores:
   output_ = np.append(output_, treble_output, axis=0)
   # output_ = np.append(output_, bass_output, axis=0)
   print("treble_input.shape: ", treble_input.shape)
-  sum_input_size += 1
+  index += 1
   print()
 
 print("input_.shape: ", input_.shape)
@@ -100,7 +101,7 @@ model.fit(input_, output_, nb_epoch=100000, batch_size=num_of_scores, verbose=2)
 
 
 
-predict_notes = vec.generate_music(model, bundle_size=5, total_length=400)
+predict_notes = vec.generate_music(model, bundle_size=bundle_size, total_length=400)
 s = vec.notes_to_stream(predict_notes)
 s.show()
 

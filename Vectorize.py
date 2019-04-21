@@ -28,7 +28,7 @@ name_dic = {0:'C', 1:'C#', 2: 'D', 3: 'D#', 4: 'E', 5: 'F', 6: 'F#', 7: 'G',
 				8: 'G#', 9: 'A', 10: 'A#', 11: 'B'}
 
 sharps_to_diatonic_dic = {-1: -5, -2: 2, -3: -3, -4: 4, -5: -1, -6: -6,
-													0: 0, 1: 5, 2: -2, 3: 3, 4: -4, 5: 1}
+													0: 0, 1: 5, 2: -2, 3: 3, 4: -4, 5: 1, 6: -6}
 
 
 
@@ -539,6 +539,18 @@ def save_train(trained_model):
 
 
 
+def save_music(s):
+	for i in range(1000):
+		file_name = 'saved_music/music' + str(i) + '.mid'
+		if not os.path.isfile(file_name):
+			s.write('midi', file_name)
+			return
+	print('Too many file exist. It is saved in', file_name)
+	s.write('midi', file_name)
+
+
+
+
 def load_train(model_name):
 	return load_model(model_name)
 
@@ -635,7 +647,6 @@ def remove_tie_chord(chord_):
 	while len(note_index_to_be_remove) != 0:
 		index = note_index_to_be_remove.pop()
 		chord_.remove(chord_[index])
-
 
 
 

@@ -148,6 +148,7 @@ def all_vectorize(part, scale_int=0):
 	total_num_measures = len(measures)
 	num_all_notes = count_notes(part)
 	print("num_all_notes:", num_all_notes)
+	print("num_of_measures:", total_num_measures)
 	notes_vector = np.zeros([num_all_notes, onehot_size]) 
 	chrods_vector = np.zeros([len(measures), number_of_names])
 	total_accum_duration = 0
@@ -158,8 +159,8 @@ def all_vectorize(part, scale_int=0):
 	for measure in measures:
 		# print(measure_index)
 		measure_chord_pos = get_measure_pos(measure, steps_to_move)
-		chord_progress_str = chord_progress_str + name_dic[measure_chord_pos] + " "
 		if measure_chord_pos != None:
+			chord_progress_str = chord_progress_str + name_dic[measure_chord_pos] + " "
 			chrods_vector[measure_index, measure_chord_pos] = 1
 		measure_index += 1
 		measure_accum_duration = 0
@@ -186,7 +187,7 @@ def all_vectorize(part, scale_int=0):
 			if measure_chord_pos != None:
 				iter_vector[measure_chord_pos_in_vector + measure_chord_pos] = 1
 			nth_index += 1
-	print("progress: ", chord_progress_str)
+	print("Chord Progress: ", chord_progress_str)
 	notes_vector = notes_vector[: nth_index]
 	return notes_vector, chrods_vector
 

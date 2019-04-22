@@ -1,4 +1,5 @@
 # $ source activate tensorflow  // in Mac
+# $ activate tensorflow  // in my window7
 # copy All and paste in python3.6 instead execute python3 train_with_keras,
 # becasue you want to generate music in the middle of training and retrain without losing data
 
@@ -18,6 +19,7 @@ from keras.utils import multi_gpu_model
 
 maxlen = 1000
 bundle_size = 10
+measure_bundle_size = 8
 onehot_size = vec.onehot_size
 slide_size = 1
 score_dir = 'score'
@@ -45,37 +47,34 @@ print("num_of_scores: ", num_of_scores)
 input_ = np.empty(shape=[0, bundle_size, vec.onehot_size])
 output_ = np.empty(shape=[0, bundle_size, vec.onehot_size])
 
+measures_input_ = np.empty(shape=[0, measure_bundle_size, vec.number_of_names])
+measures_output_ = np.empty(shape=[0, measure_bundle_size, vec.number_of_names])
+
 index = 0
 
 
 
 for score_name in scores:
-  # if sum_input_size == 3:
-  #   sum_input_size += 1
-  #   continue
-  # if sum_input_size == 1:
-  #   break
   print(index, "/", len(scores), "  ", score_name)
   if score_name[-4:] != '.mxl':
     print("Invalid Score")
     print()
     index += 1
     continue
-  # file_name = "score/First_Love.mxl"
   file_name = score_dir + '/' + score_name
-  treble_input, treble_output = vec.mxl_to_vector(file_name, measure_size=1, bundle_size=bundle_size, slide_size=slide_size, clef="treble")
-  # bass_input, bass_output = vec.mxl_to_vector(file_name, measure_size=1, bundle_size=bundle_size, slide_size=slide_size, maxlen=maxlen, clef="bass")
-  print("len(treble_input): ", len(treble_input))
-  input_ = np.append(input_, treble_input, axis=0)
-  print("len(input_): ", len(input_))
-  # input_ = np.append(input_, bass_input, axis=0)
-  output_ = np.append(output_, treble_output, axis=0)
-  # output_ = np.append(output_, bass_output, axis=0)
-  print("treble_input.shape: ", treble_input.shape)
+  note_input, note_output, measure_input, measure_output = vec.mxl_to_vector(file_name, measure_size=1, bundle_size=bundle_size, slide_size=slide_size, clef="treble")
+  input_ = np.append(input_, note_input, axis=0)
+  output_ = np.append(output_, note_output, axis=0)
+  measures_input_ = np.append(measures_input_, measure_input, axis=0)
+  measures_output_ = np.append(measures_output_, measure_output, axis=0)
   index += 1
+  print("len(note_input): ", len(note_input), "len(input_): ", len(input_))
+  print("len(measure_input): ", len(measure_input), "len(measures_input_): ", len(measures_input_))
   print()
 
+
 print("input_.shape: ", input_.shape)
+print("measures_input_.shape: ", measures_input_.shape)
 
 model = Sequential()
 model.add(LSTM(256, input_shape=(None, onehot_size), return_sequences=True))

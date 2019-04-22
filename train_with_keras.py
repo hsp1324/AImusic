@@ -15,6 +15,7 @@ from fractions import Fraction
 import copy
 from os import listdir
 from keras.utils import multi_gpu_model
+from keras.callbacks import ModelCheckpoint
 
 
 maxlen = 1000
@@ -68,8 +69,8 @@ for score_name in scores:
   measures_input_ = np.append(measures_input_, measure_input, axis=0)
   measures_output_ = np.append(measures_output_, measure_output, axis=0)
   index += 1
-  print("len(note_input): ", len(note_input), "len(input_): ", len(input_))
-  print("len(measure_input): ", len(measure_input), "len(measures_input_): ", len(measures_input_))
+  print("note_input / accum_note:", len(note_input), "/", len(input_))
+  print("measure_input / accum_measure:", len(measure_input), "/", len(measures_input_))
   print()
 
 
@@ -90,14 +91,18 @@ model.add(Dense(256))
 model.add(Dropout(0.15))
 model.add(Dense(onehot_size))
 model.add(Activation('softmax'))
-optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-5)
+optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)
 # treble_model = multi_gpu_model(treble_model, gpus=4)
 
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-model.fit(input_, output_, nb_epoch=100000, batch_size=num_of_scores, verbose=2)
+
+filepath="saved_model/temp_model.h5"
+checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+callbacks_list = [checkpoint]
+model.fit(input_, output_, nb_epoch=100000, batch_size=512, callbacks=callbacks_list, verbose=2)
 
 
-
+new_model = load_model("model.h5")
 
 
 predict_notes = vec.generate_music(model, bundle_size=bundle_size, total_length=400)

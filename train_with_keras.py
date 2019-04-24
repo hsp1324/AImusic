@@ -105,13 +105,18 @@ model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 filepath="saved_model/temp_model.h5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 callbacks_list = [checkpoint]
-model.fit(input_, output_, nb_epoch=100000, batch_size=512, callbacks=callbacks_list, verbose=2)
+chord_model.fit(measures_input_, measures_output_, nb_epoch=100000, batch_size=512, callbacks=callbacks_list, verbose=2)
+
+
+
+
 
 
 new_model = load_model("model.h5")
 
+chord_model = None
 
-predict_notes = vec.generate_music(model, bundle_size=bundle_size, total_length=400)
+predict_notes = vec.generate_music(model, chord_model=chord_model, bundle_size=bundle_size, total_length=400)
 s = vec.notes_to_stream(predict_notes)
 s.show()
 

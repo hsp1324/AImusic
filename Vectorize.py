@@ -120,25 +120,21 @@ def slide_window(part, bundle_size=10, measure_bundle_size=8, slide_size=2, scal
 	sample_size = int(np.ceil((len(notes_vector) - bundle_size + 1) / slide_size))
 	input_ = np.empty(shape=[0, bundle_size, onehot_size])
 	output_ = np.empty(shape=[0, bundle_size, onehot_size])
-
 	measure_input = np.empty(shape=[0, measure_bundle_size, number_of_names])
 	measure_output = np.empty(shape=[0, measure_bundle_size, number_of_names])
 	measure_sample_size = int(np.ceil(len(measures_vector) - measure_bundle_size + 1))
-
 	# ex) notes_vector  = [C, F, G, C, F, G]
 	#     		input_  = [C, F, G, C]
 	#     		output_ = [F, G, C, F]
 	for i in range(0, measure_sample_size - 1):
 		measure_input = np.append(measure_input, copy.deepcopy(measures_vector[i : i + measure_bundle_size, : ]).reshape([1, measure_bundle_size, number_of_names]), axis=0)
 		measure_output = np.append(measure_output, copy.deepcopy(measures_vector[i + 1 : i + measure_bundle_size + 1, : ]).reshape([1, measure_bundle_size, number_of_names]), axis=0)
-
 	# ex) notes_vector  = [1, 2, 3, 4, 5, 6]
 	#     		input_  = [1, 2, 3, 4, 5]
 	#     		output_ = [2, 3, 4, 5, 6]
 	for i in range(0, sample_size - slide_size, slide_size):
 		input_ = np.append(input_, copy.deepcopy(notes_vector[i : i + bundle_size, : ]).reshape([1, bundle_size, onehot_size]), axis=0)
 		output_ = np.append(output_, copy.deepcopy(notes_vector[i + 1 : i + bundle_size + 1, : ]).reshape([1, bundle_size, onehot_size]), axis=0)
-	
 	return input_, output_, measure_input, measure_output
 
 
@@ -499,30 +495,60 @@ def notes_to_stream(notes):
 
 
 
-def generate_music(model, bundle_size=10, total_length=400):
-	first_note_name =  name_dic[np.random.choice(len(name_dic))]
+def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
+	first_name_index = np.random.choice(len(name_dic))
+	first_note_name =  name_dic[first_name_index]
 	first_note_duration = np.random.choice([0.25, 0.5, 1.0, 2.0, 4.0])
 	first_note_octave = np.random.choice(['4', '5'])
 	first_note = music21.note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
-	predict_one_hots = note_to_vector(first_note).reshape(1, 1, onehot_size)
+	measure_vector = np.zeros(number_of_names)
+	predict_chord_one_hots = measure_vector.reshape(1, 1, number_of_names)
+	first_vector = note_to_vector(first_note)
+	if (chord_model != None):
+		first_vector[measure_chord_pos_in_vector + first_name_index] = 1
+		measure_vector[first_name_index] = 1
+	predict_one_hots = first_vector.reshape(1, 1, onehot_size)
 	predict_notes = [first_note]
+	accum_measure_duration = 0.0
 	for i in range(1, total_length):
 		print(i, "/", total_length)
 		outcome = model.predict(predict_one_hots)
 		latest_outcome = outcome[0, -1]
 		predict_note = vector_to_note(latest_outcome.reshape(1, 1, onehot_size))
 		predict_notes.extend(predict_note)
+		accum_measure_duration += predict_note[0].duration.quarterLength
 		predict_one_hot = note_to_vector(predict_note[0])
+		if accum_measure_duration >= 4.0 and chord_model != None:
+			measure_chord_index = predict_next_chord(chord_model, predict_chord_one_hots)
+			measure_vector = np.zeros(number_of_names)
+			measure_vector[measure_chord_index] = 1
+			accum_measure_duration = 0.0
+			predict_one_hot[measure_chord_pos_in_vector + measure_chord_index] = 1
 		# predict_one_hot = output_to_one_hot(latest_outcome)
 		# slide window  keep accumulate predict_one_hot until the bundle size. Then keep the bundle size
 		if(len(predict_one_hots[0]) < bundle_size):
 			predict_one_hots = np.append(predict_one_hots[0], predict_one_hot.reshape(1, onehot_size), axis=0)
 			len_so_far, no = predict_one_hots.shape
 			predict_one_hots = predict_one_hots.reshape(1, len_so_far, onehot_size)
+			predict_chord_one_hots = np.append(predict_chord_one_hots[0], measure_vector.reshape(1, number_of_names), axis=0)
+			len_so_far, no = predict_chord_one_hots.shape
+			predict_chord_one_hots = predict_chord_one_hots.reshape(1, len_so_far, number_of_names)
 		else:
 			predict_one_hots[0, :-1, :] = predict_one_hots[0, 1:, :]
 			predict_one_hots[0, -1] = predict_one_hot
+			predict_chord_one_hots[0, :-1, :] = predict_chord_one_hots[0, 1:, :]
+			predict_chord_one_hots[0, -1] = measure_vector
 	return predict_notes
+
+
+
+def predict_next_chord(chord_model, chord_progress_so_far):
+	chord_progress = chord_model.predict(chord_progress_so_far)
+	latest_outcome = chord_progress[0, -1]
+	choosen_chord = latest_outcome.argmax()
+	return choosen_chord
+
+
 
 
 

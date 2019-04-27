@@ -72,7 +72,6 @@ for score_name in scores:
   print("note_input / accum_note:", len(note_input), "/", len(input_))
   print("measure_input / accum_measure:", len(measure_input), "/", len(measures_input_))
   print()
-  break
 
 
 np.save("input_output/input_"+str(num_of_scores)+"_songs", input_)
@@ -110,7 +109,7 @@ def train_note_model():
   model.add(Activation('softmax'))
   optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)
   # treble_model = multi_gpu_model(treble_model, gpus=4)
-  # model.load_weights(filepath)
+  # model.load_weights(temp_model.hdf5)
   model.compile(loss='categorical_crossentropy', optimizer=optimizer)
   filepath="saved_model/note_epoch{epoch:02d}-loss{loss:.2f}.hdf5"
   checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=0, save_best_only=True, mode='min', period=10)
@@ -120,31 +119,27 @@ def train_note_model():
 
 
 def train_chord_model():
-  chord_model = Sequential()
-  chord_model.add(LSTM(256, input_shape=(None, 12), return_sequences=True))
-  chord_model.add(Dropout(0.15))
-  chord_model.add(Dense(256))
-  chord_model.add(Dropout(0.15))
-  chord_model.add(LSTM(512, return_sequences=True))
-  chord_model.add(Dropout(0.15))
-  chord_model.add(Dense(256))
-  chord_model.add(Dropout(0.15))
-  chord_model.add(LSTM(512, return_sequences=True))
-  chord_model.add(Dense(256))
-  chord_model.add(Dropout(0.15))
-  chord_model.add(Dense(12))
-  chord_model.add(Activation('softmax'))
-  optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)
-  # chord_model.load_weights(filepath)
-  chord_model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-  filepath="saved_model/chord_epoch{epoch:02d}-loss{loss:.2f}.hdf5"
-  checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=0, save_best_only=True, mode='min', period=100)
-  callbacks_list = [checkpoint]
-  chord_model.fit(input_, output_, nb_epoch=100000, batch_size=512, callbacks=callbacks_list, verbose=2)
-
-
-
-chord_model.fit(measures_input_, measures_output_, nb_epoch=100000, batch_size=512, callbacks=callbacks_list, verbose=2)
+chord_model = Sequential()
+chord_model.add(LSTM(256, input_shape=(None, 12), return_sequences=True))
+chord_model.add(Dropout(0.15))
+chord_model.add(Dense(256))
+chord_model.add(Dropout(0.15))
+chord_model.add(LSTM(512, return_sequences=True))
+chord_model.add(Dropout(0.15))
+chord_model.add(Dense(256))
+chord_model.add(Dropout(0.15))
+chord_model.add(LSTM(512, return_sequences=True))
+chord_model.add(Dense(256))
+chord_model.add(Dropout(0.15))
+chord_model.add(Dense(12))
+chord_model.add(Activation('softmax'))
+optimizer = RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=1e-6)
+# chord_model.load_weights(filepath)
+chord_model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+filepath="saved_model/chord_epoch{epoch:02d}-loss{loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=0, save_best_only=True, mode='min', period=100)
+callbacks_list = [checkpoint]
+chord_model.fit(measures_input_, measures_output_, nb_epoch=10000, batch_size=512, callbacks=callbacks_list, verbose=2)
 
 
 
@@ -154,7 +149,7 @@ new_model = load_model("model.h5")
 chord_model = None
 
 
-predict_notes = vec.generate_music(model, chord_model=chord_model, bundle_size=bundle_size, total_length=400)
+predict_notes = vec.generate_music(model, chord_model=None, bundle_size=bundle_size, total_length=400)
 s = vec.notes_to_stream(predict_notes)
 s.show()
 

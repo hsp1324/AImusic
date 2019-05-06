@@ -18,9 +18,6 @@ import os.path
 
 
 
-
-
-
 possible_duration = [0.0625, Fraction(1,10), Fraction(1,12), 0.125, Fraction(1,7), Fraction(1,6), Fraction(1,5), 
 					0.25, Fraction(2,7), Fraction(1,3), 0.375, 0.5, Fraction(2,3), 0.625, 0.75, 0.875, 1.0, 1.25,
 					1.5, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0]
@@ -146,7 +143,7 @@ def all_vectorize(part, scale_int=0):
 	print("num_all_notes:", num_all_notes)
 	print("num_of_measures:", total_num_measures)
 	notes_vector = np.zeros([num_all_notes, onehot_size]) 
-	chrods_vector = np.zeros([len(measures), number_of_names])
+	chrods_vector = np.zeros([len(measures)*2, number_of_names])
 	total_accum_duration = 0
 	nth_index = 0
 	measure_index = 0
@@ -154,12 +151,20 @@ def all_vectorize(part, scale_int=0):
 	chord_progress_str = ""
 	for measure in measures:
 		# print(measure_index)
-		measure_chord_pos = get_measure_pos(measure, steps_to_move)
-		if measure_chord_pos != None:
-			chord_progress_str = chord_progress_str + name_dic[measure_chord_pos] + " "
-			chrods_vector[measure_index, measure_chord_pos] = 1
-		measure_index += 1
-		measure_accum_duration = 0
+		first_half_chord_pos,  second_half_chord_pos= get_measure_pos(measure, steps_to_move)
+		if first_half_chord_pos != None:
+			chord_progress_str = chord_progress_str + name_dic[first_half_chord_pos] + " "
+			chrods_vector[measure_index, first_half_chord_pos] = 1
+		else:
+			chord_progress_str = chord_progress_str + "None "
+		if second_half_chord_pos != None:
+			chord_progress_str = chord_progress_str + name_dic[second_half_chord_pos] + ", "
+			chrods_vector[measure_index+1, second_half_chord_pos] = 1
+		else:
+			chord_progress_str = chord_progress_str + "None, "
+		measure_index += 2
+		measure_accum_duration = 0.0
+		chord_pos = first_half_chord_pos
 		for iter_item in measure:
 			if type(iter_item) not in [music21.note.Note, music21.note.Rest, music21.chord.Chord]:
 				continue
@@ -180,9 +185,12 @@ def all_vectorize(part, scale_int=0):
 				iter_vector[duration_pos_in_vector + duration_index] = 1
 			else:
 				continue
-			if measure_chord_pos != None:
-				iter_vector[measure_chord_pos_in_vector + measure_chord_pos] = 1
+			if measure_accum_duration >= 2:
+				chord_pos = second_half_chord_pos
+			if chord_pos != None:
+				iter_vector[measure_chord_pos_in_vector + chord_pos] = 1
 			nth_index += 1
+			measure_accum_duration += iter_item.duration.quarterLength
 	print("Chord Progress: ", chord_progress_str)
 	notes_vector = notes_vector[: nth_index]
 	return notes_vector, chrods_vector
@@ -230,17 +238,22 @@ def note_to_vector(iter_note):
 
 
 def get_measure_pos(measure, steps_to_move):
-	measure_chord = extract_chord_in_measure(measure)
-	measure_chord_pos = transform_name_to_number(measure_chord)
-	if measure_chord_pos == None:
-		return None
-	measure_chord_pos = measure_chord_pos + steps_to_move
-	if measure_chord_pos >= 12:
-		measure_chord_pos -= 12
-	elif measure_chord_pos < 0:
-		measure_chord_pos += 12
-	return measure_chord_pos
-
+	first_half_chord, second_half_chord = extract_chord_in_measure(measure)
+	first_half_chord_pos = transform_name_to_number(first_half_chord)
+	second_half_chord_pos = transform_name_to_number(second_half_chord)
+	if first_half_chord_pos != None:  # In case of only rest in measure
+		first_half_chord_pos = first_half_chord_pos + steps_to_move
+		if first_half_chord_pos >= 12:
+			first_half_chord_pos -= 12
+		elif first_half_chord_pos < 0:
+			first_half_chord_pos += 12
+	if second_half_chord_pos != None:  # In case of only rest in measure
+		second_half_chord_pos = second_half_chord_pos + steps_to_move
+		if second_half_chord_pos >= 12:
+			second_half_chord_pos -= 12
+		elif second_half_chord_pos < 0:
+			second_half_chord_pos += 12
+	return first_half_chord_pos, second_half_chord_pos
 
 
 def get_octave(octave):
@@ -451,27 +464,35 @@ def output_to_one_hot(vector):
 
 
 def extract_chord_in_measure(measure):
-	all_notes_in_mesure = music21.chord.Chord()
+	first_half_notes_in_measure = music21.chord.Chord()
+	second_half_notes_in_measure = music21.chord.Chord()
+	picked_measure = first_half_notes_in_measure
+	accum_duration = 0.0
 	for item in measure:
+		accum_duration += item.duration.quarterLength
 		if type(item) is music21.note.Note:
-			if item not in all_notes_in_mesure:
-				all_notes_in_mesure.add(item)
+			if item not in picked_measure:
+				picked_measure.add(item)
 		elif type(item) is music21.chord.Chord:
 			for note in item:
-				if note not in all_notes_in_mesure:
-					all_notes_in_mesure.add(note)
-		else:
-			continue
-	measure_chord = music21.harmony.chordSymbolFigureFromChord(all_notes_in_mesure)
-	# print("measure: ", measure_chord)
-	# print("bass: ", all_notes_in_mesure.bass())
-	if measure_chord == "Chord Symbol Cannot Be Identified":
-		# print("base / name: ", all_notes_in_mesure.bass(), "/", transform_name_to_number(all_notes_in_mesure.bass().name))
-		# print("-------------------")
-		return all_notes_in_mesure.bass().name
-	# print("base / name: ", all_notes_in_mesure.bass(), "/", transform_name_to_number(measure_chord))
+				if note not in picked_measure:
+					picked_measure.add(note)
+		if accum_duration >= 2:
+			picked_measure = second_half_notes_in_measure
+			accum_duration = 0.0
+	first_half_chord = music21.harmony.chordSymbolFigureFromChord(first_half_notes_in_measure)
+	second_half_chord = music21.harmony.chordSymbolFigureFromChord(second_half_notes_in_measure)
+	# print("measure: ", first_half_chord)
+	# print("bass: ", first_half_notes_in_measure.bass())
+	if first_half_chord == "Chord Symbol Cannot Be Identified":
+		first_half_chord = first_half_notes_in_measure.bass().name
+	if second_half_chord == "Chord Symbol Cannot Be Identified":
+		second_half_chord = second_half_notes_in_measure.bass().name
+
+	# print("first  base / name: ", first_half_notes_in_measure.bass(), "/", transform_name_to_number(first_half_chord))
+	# print("second base / name: ", second_half_notes_in_measure.bass(), "/", transform_name_to_number(second_half_chord))
 	# print("-------------------")
-	return measure_chord
+	return first_half_chord, second_half_chord
 
 
 

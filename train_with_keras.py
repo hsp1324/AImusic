@@ -139,14 +139,14 @@ def train_chord_model():
   # chord_model.load_weights(filepath)
   chord_model.compile(loss='categorical_crossentropy', optimizer=optimizer)
   filepath="saved_model/chord_epoch{epoch:02d}-loss{loss:.2f}.hdf5"
-  checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=0, save_best_only=True, mode='min', period=100)
+  checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=0, save_best_only=True, mode='min', period=10)
   callbacks_list = [checkpoint]
   chord_model.fit(measures_input_, measures_output_, nb_epoch=10000, batch_size=512, callbacks=callbacks_list, verbose=2)
 
 
-# new_model = load_model("saved_model/temp_model.hdf5")
 
 model.load_weights("saved_model/temp_model.hdf5")
+chord_model.load_weights("saved_model/temp_model.hdf5")
 
 chord_model = None
 
@@ -168,6 +168,19 @@ def test_score():
     check_song = music21.converter.parse(file_name)
     index += 1
     print()
+
+
+
+def test_transform_to_diatonic():
+  river = music21.converter.parse('score/River_Flows_In_You.mxl')
+  river_chordify = river.chordify()   # Merge treble and bass
+  key_ = vec.get_key(river_chordify)
+  untied_river = vec.remove_tie_part(river_chordify)
+  vectorized_diatonic_part, measure_chords = vec.all_vectorize(untied_river, scale_int=key_.sharps)
+  reshaped = vectorized_diatonic_part.reshape(1, vectorized_diatonic_part.shape[0], vectorized_diatonic_part.shape[1])
+  diatonic_stream = vec.vector_to_stream(reshaped)
+  return diatonic_stream
+
 
 
 # sample_index = 3

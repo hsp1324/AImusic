@@ -155,14 +155,16 @@ def all_vectorize(part, scale_int=0):
 		if first_half_chord_pos != None:
 			chord_progress_str = chord_progress_str + name_dic[first_half_chord_pos] + " "
 			chrods_vector[measure_index, first_half_chord_pos] = 1
+			measure_index += 1
 		else:
 			chord_progress_str = chord_progress_str + "None "
 		if second_half_chord_pos != None:
 			chord_progress_str = chord_progress_str + name_dic[second_half_chord_pos] + ", "
 			chrods_vector[measure_index+1, second_half_chord_pos] = 1
+			measure_index += 1
 		else:
 			chord_progress_str = chord_progress_str + "None, "
-		measure_index += 2
+		# measure_index += 2    # If you want to keep blank chord for unidentified measure uncomment this line and delete "measure_index += 1" for both first and second chord
 		measure_accum_duration = 0.0
 		chord_pos = first_half_chord_pos
 		for iter_item in measure:
@@ -525,6 +527,7 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
 	first_note = music21.note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
 	measure_vector = np.zeros(number_of_names)
 	first_vector = note_to_vector(first_note)
+	chord_progress_str = ""
 	if (chord_model != None):
 		first_vector[measure_chord_pos_in_vector + measure_chord_index] = 1
 		measure_vector[measure_chord_index] = 1
@@ -543,9 +546,13 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
 		if chord_model != None:
 			if accum_measure_duration >= 4.0:
 				measure_chord_index = predict_next_chord(chord_model, predict_chord_one_hots)
+				chord_name = name_dic[measure_chord_index]
 				measure_vector = np.zeros(number_of_names)
 				measure_vector[measure_chord_index] = 1
 				accum_measure_duration = 0.0
+				chord_symbol = music21.harmony.ChordSymbol(chord_name)
+				predict_notes.append(chord_symbol)
+				chord_progress_str = chord_progress_str + chord_name + " "
 			predict_one_hot[measure_chord_pos_in_vector + measure_chord_index] = 1
 		# predict_one_hot = output_to_one_hot(latest_outcome)
 		# slide window  keep accumulate predict_one_hot until the bundle size. Then keep the bundle size
@@ -561,6 +568,7 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
 			predict_one_hots[0, -1] = predict_one_hot
 			predict_chord_one_hots[0, :-1, :] = predict_chord_one_hots[0, 1:, :]
 			predict_chord_one_hots[0, -1] = measure_vector
+	print("chord_progress_str: ", chord_progress_str)
 	return predict_notes
 
 
@@ -709,17 +717,6 @@ def select_chord(measure):
 	all_notes = list(measure.notes)
 	
 
-
-
-def test_transform_to_diatonic():
-	river = music21.converter.parse('score/River_Flows_In_You.mxl')
-	river_chordify = river.chordify()   # Merge treble and bass
-	key_ = get_key(river_chordify)
-	untied_river = remove_tie_part(river_chordify)
-	vectorized_diatonic_part, measure_chords = all_vectorize(untied_river, scale_int=key_.sharps)
-	reshaped = vectorized_diatonic_part.reshape(1, vectorized_diatonic_part.shape[0], vectorized_diatonic_part.shape[1])
-	diatonic_stream = vector_to_stream(reshaped)
-	return diatonic_stream
 
 
 

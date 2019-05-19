@@ -518,8 +518,15 @@ def notes_to_stream(notes):
 
 
 
-def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
-	first_name_index = np.random.choice(len(name_dic))
+def generate_music(model, chord_model=None, bundle_size=10, total_length=400, sequence=None):
+	chord_index = 0
+	if sequence == None:
+		first_name_index = np.random.choice(len(name_dic))
+	else:
+		first_name_index = get_chord_index(sequence[0])
+		chord_index += 1
+		chord_index = chord_index % len(sequence)
+
 	measure_chord_index = first_name_index
 	first_note_name =  name_dic[first_name_index]
 	first_note_duration = np.random.choice([0.25, 0.5, 1.0, 2.0, 4.0])
@@ -527,10 +534,12 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
 	first_note = music21.note.Note(first_note_name + first_note_octave, quarterLength = first_note_duration)
 	measure_vector = np.zeros(number_of_names)
 	first_vector = note_to_vector(first_note)
-	chord_progress_str = ""
-	if (chord_model != None):
-		first_vector[measure_chord_pos_in_vector + measure_chord_index] = 1
-		measure_vector[measure_chord_index] = 1
+
+	chord_progress_str = first_note_name + " "
+	chord_symbol = music21.harmony.ChordSymbol(chord_name)
+	predict_notes.append(chord_symbol)
+	first_vector[measure_chord_pos_in_vector + measure_chord_index] = 1
+	measure_vector[measure_chord_index] = 1
 	predict_chord_one_hots = measure_vector.reshape(1, 1, number_of_names)
 	predict_one_hots = first_vector.reshape(1, 1, onehot_size)
 	predict_notes = [first_note]
@@ -545,7 +554,11 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400):
 		predict_one_hot = note_to_vector(predict_note[0])
 		if chord_model != None:
 			if accum_measure_duration >= 4.0:
-				measure_chord_index = predict_next_chord(chord_model, predict_chord_one_hots)
+				if sequence != None:
+					measure_chord_index = get_chord_index(sequence[chord_index])
+					chord_index  = (chord_index + 1) % len(sequence)
+				else:
+					measure_chord_index = predict_next_chord(chord_model, predict_chord_one_hots)
 				chord_name = name_dic[measure_chord_index]
 				measure_vector = np.zeros(number_of_names)
 				measure_vector[measure_chord_index] = 1
@@ -580,7 +593,10 @@ def predict_next_chord(chord_model, chord_progress_so_far):
 	return choosen_chord
 
 
-
+def get_chord_index(chord_name):
+	for i in name_dic:
+		if name_dic[i] == chord_name:
+			return i
 
 
 def save_train(trained_model):

@@ -19,7 +19,7 @@ from keras.callbacks import ModelCheckpoint
 
 
 maxlen = 1000
-bundle_size = 10
+bundle_size = 16
 measure_bundle_size = 8
 onehot_size = vec.onehot_size
 slide_size = 1
@@ -146,11 +146,11 @@ def train_chord_model():
 
 
 model.load_weights("saved_model/temp_model.hdf5")
-chord_model.load_weights("saved_model/temp_model.hdf5")
+chord_model.load_weights("saved_model/chord_epoch01-loss1.78.hdf5")
 
 chord_model = None
 
-predict_notes = vec.generate_music(model, chord_model=chord_model, bundle_size=bundle_size, total_length=800)
+predict_notes = vec.generate_music(model, chord_model=chord_model, bundle_size=bundle_size, total_length=800, sequence=['C', 'A', 'F', 'G'])
 s = vec.notes_to_stream(predict_notes)
 s.show()
 

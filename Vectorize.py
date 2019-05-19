@@ -536,13 +536,13 @@ def generate_music(model, chord_model=None, bundle_size=10, total_length=400, se
 	first_vector = note_to_vector(first_note)
 
 	chord_progress_str = first_note_name + " "
-	chord_symbol = music21.harmony.ChordSymbol(chord_name)
-	predict_notes.append(chord_symbol)
 	first_vector[measure_chord_pos_in_vector + measure_chord_index] = 1
 	measure_vector[measure_chord_index] = 1
 	predict_chord_one_hots = measure_vector.reshape(1, 1, number_of_names)
 	predict_one_hots = first_vector.reshape(1, 1, onehot_size)
-	predict_notes = [first_note]
+	chord_symbol = music21.harmony.ChordSymbol(first_note_name)
+	predict_notes = [chord_symbol]
+	predict_notes.append(first_note)
 	accum_measure_duration = 0.0
 	for i in range(1, total_length):
 		print(i, "/", total_length)

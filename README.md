@@ -1,9 +1,10 @@
 # AImusic
 Create music
 
-## Installation
+## Dependancy
 ```bash
 pip install music21
+pip install tkinter
 ```
 
 
